@@ -1,6 +1,14 @@
 import type { Metadata } from "next";
+import localFont from "next/font/local";
 import Sidebar from "@/components/sidebar";
 import "./globals.css";
+
+const sahel = localFont({
+  src: "../fonts/Sahel-VF.woff2",
+  variable: "--font-sahel",
+  weight: "100 900",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "کارها",
@@ -13,7 +21,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fa" dir="rtl" className="h-full antialiased">
+    <html lang="fa" dir="rtl" className={`${sahel.variable} h-full antialiased`}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: `try{if(localStorage.getItem("todo-sidebar-collapsed")==="true")document.documentElement.classList.add("sidebar-collapsed")}catch{}` }} />
       </head>
