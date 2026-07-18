@@ -68,13 +68,6 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="mt-auto flex items-center justify-center gap-3 border-t border-zinc-200 pt-4 md:justify-start md:px-2">
-          <div className="grid size-8 place-items-center rounded-full bg-emerald-100 text-xs font-semibold text-emerald-700">HP</div>
-          <div className="hidden min-w-0 md:block">
-            <p className="truncate text-sm font-medium">Your workspace</p>
-            <p className="text-xs text-zinc-400">Free plan</p>
-          </div>
-        </div>
       </aside>
 
       <main className="min-w-0 flex-1 px-6 py-8 sm:px-10 lg:px-16">
