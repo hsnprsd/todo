@@ -3,7 +3,8 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { motion } from "framer-motion";
-import { CalendarDays, Check } from "lucide-react";
+import { CalendarDays, Check, Repeat2 } from "lucide-react";
+import { recurrenceLabel } from "@/lib/recurrence";
 import type { Task } from "@/types/task";
 
 export function formatDueDate(dueDate: string) {
@@ -80,12 +81,20 @@ export default function TaskCard({
           >
             {task.title}
           </motion.span>
-          {showDueDate && task.dueDate && (
-            <span className={`mt-1 flex items-center gap-1 text-xs ${task.completed ? "text-zinc-500" : "text-zinc-400"}`}>
-              <CalendarDays aria-hidden="true" className="size-3" />
-              {formatDueDate(task.dueDate)}
-            </span>
-          )}
+          <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+            {showDueDate && task.dueDate && (
+              <span className={`flex items-center gap-1 text-xs ${task.completed ? "text-zinc-500" : "text-zinc-400"}`}>
+                <CalendarDays aria-hidden="true" className="size-3" />
+                {formatDueDate(task.dueDate)}
+              </span>
+            )}
+            {task.recurrenceType && (
+              <span className={`flex items-center gap-1 text-xs ${task.completed ? "text-zinc-500" : "text-green-400"}`}>
+                <Repeat2 aria-hidden="true" className="size-3" />
+                {recurrenceLabel(task.recurrenceType, task.recurrenceWeekdays)}
+              </span>
+            )}
+          </span>
         </button>
       </div>
     </motion.li>
@@ -106,12 +115,20 @@ export function TaskCardPreview({ task, faded = false, showDueDate = true }: { t
         <span className={`block truncate text-sm ${task.completed ? "text-zinc-500 line-through" : "text-zinc-200"}`}>
           {task.title}
         </span>
-        {showDueDate && task.dueDate && (
-          <span className={`mt-1 flex items-center gap-1 text-xs ${task.completed ? "text-zinc-500" : "text-zinc-400"}`}>
-            <CalendarDays aria-hidden="true" className="size-3" />
-            {formatDueDate(task.dueDate)}
-          </span>
-        )}
+        <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+          {showDueDate && task.dueDate && (
+            <span className={`flex items-center gap-1 text-xs ${task.completed ? "text-zinc-500" : "text-zinc-400"}`}>
+              <CalendarDays aria-hidden="true" className="size-3" />
+              {formatDueDate(task.dueDate)}
+            </span>
+          )}
+          {task.recurrenceType && (
+            <span className={`flex items-center gap-1 text-xs ${task.completed ? "text-zinc-500" : "text-green-400"}`}>
+              <Repeat2 aria-hidden="true" className="size-3" />
+              {recurrenceLabel(task.recurrenceType, task.recurrenceWeekdays)}
+            </span>
+          )}
+        </span>
       </div>
     </motion.div>
   );

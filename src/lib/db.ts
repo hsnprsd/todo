@@ -24,6 +24,9 @@ db.exec(`
     due_date TEXT,
     sort_order INTEGER NOT NULL DEFAULT 0,
     completed INTEGER NOT NULL DEFAULT 0 CHECK (completed IN (0, 1)),
+    recurrence_type TEXT CHECK (recurrence_type IN ('daily', 'weekly', 'persian_monthly')),
+    recurrence_weekdays TEXT NOT NULL DEFAULT '[]',
+    recurrence_generated INTEGER NOT NULL DEFAULT 0 CHECK (recurrence_generated IN (0, 1)),
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   )
 `);
@@ -42,4 +45,16 @@ if (!taskColumnNames.has("due_date")) {
 if (!taskColumnNames.has("sort_order")) {
   db.exec("ALTER TABLE tasks ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0");
   db.exec("UPDATE tasks SET sort_order = id");
+}
+
+if (!taskColumnNames.has("recurrence_type")) {
+  db.exec("ALTER TABLE tasks ADD COLUMN recurrence_type TEXT");
+}
+
+if (!taskColumnNames.has("recurrence_weekdays")) {
+  db.exec("ALTER TABLE tasks ADD COLUMN recurrence_weekdays TEXT NOT NULL DEFAULT '[]'");
+}
+
+if (!taskColumnNames.has("recurrence_generated")) {
+  db.exec("ALTER TABLE tasks ADD COLUMN recurrence_generated INTEGER NOT NULL DEFAULT 0");
 }

@@ -9,6 +9,7 @@ import AddTaskModal from "@/components/add-task-modal";
 import TaskCard, { TaskCardPreview } from "@/components/task-card";
 import TaskDetailsModal from "@/components/task-details-modal";
 import { useTasks } from "@/hooks/use-tasks";
+import type { RecurrenceType } from "@/lib/recurrence";
 import type { Task } from "@/types/task";
 
 function toDateKey(date: Date) {
@@ -106,6 +107,8 @@ export default function CalendarPage() {
   const [taskTitle, setTaskTitle] = useState("");
   const [taskNotes, setTaskNotes] = useState("");
   const [taskDueDate, setTaskDueDate] = useState("");
+  const [recurrenceType, setRecurrenceType] = useState<RecurrenceType | null>(null);
+  const [recurrenceWeekdays, setRecurrenceWeekdays] = useState<number[]>([]);
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const [activeTaskId, setActiveTaskId] = useState<number | null>(null);
   const [dragPreview, setDragPreview] = useState<{ taskId: number; dueDate: string } | null>(null);
@@ -130,12 +133,14 @@ export default function CalendarPage() {
     setTaskTitle("");
     setTaskNotes("");
     setTaskDueDate("");
+    setRecurrenceType(null);
+    setRecurrenceWeekdays([]);
     setIsAdding(false);
   }
 
   async function submitTask(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (await addTask(taskTitle.trim(), taskNotes, taskDueDate)) closeAddModal();
+    if (await addTask(taskTitle.trim(), taskNotes, taskDueDate, recurrenceType, recurrenceWeekdays)) closeAddModal();
   }
 
   function getTargetDate(overId: string | number) {
@@ -224,18 +229,22 @@ export default function CalendarPage() {
           title={taskTitle}
           notes={taskNotes}
           dueDate={taskDueDate}
+          recurrenceType={recurrenceType}
+          recurrenceWeekdays={recurrenceWeekdays}
           error={error}
           isSaving={isSaving}
           onTitleChange={setTaskTitle}
           onNotesChange={setTaskNotes}
           onDueDateChange={setTaskDueDate}
+          onRecurrenceTypeChange={setRecurrenceType}
+          onRecurrenceWeekdaysChange={setRecurrenceWeekdays}
           onClose={closeAddModal}
           onSubmit={submitTask}
         />
       )}
       </AnimatePresence>
       <AnimatePresence>
-        {selectedTask && <TaskDetailsModal task={selectedTask} error={error} isSaving={isSaving} onClose={() => setSelectedTaskId(null)} onSave={(nextTitle, nextNotes, nextDueDate, completed) => updateTask(selectedTask.id, nextTitle, nextNotes, nextDueDate, completed)} onDelete={() => deleteTask(selectedTask.id)} />}
+        {selectedTask && <TaskDetailsModal task={selectedTask} error={error} isSaving={isSaving} onClose={() => setSelectedTaskId(null)} onSave={(nextTitle, nextNotes, nextDueDate, completed, nextRecurrenceType, nextRecurrenceWeekdays) => updateTask(selectedTask.id, nextTitle, nextNotes, nextDueDate, completed, nextRecurrenceType, nextRecurrenceWeekdays)} onDelete={() => deleteTask(selectedTask.id)} />}
       </AnimatePresence>
     </motion.div>
   );

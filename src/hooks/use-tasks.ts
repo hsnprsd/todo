@@ -3,7 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { arrayMove } from "@dnd-kit/sortable";
 import { celebrateTaskCompletion } from "@/lib/confetti";
+import type { RecurrenceType } from "@/lib/recurrence";
 import type { Task } from "@/types/task";
+
+type TaskMutation = { task: Task; nextTask: Task | null };
 
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -28,7 +31,7 @@ export function useTasks() {
     void loadTasks();
   }, []);
 
-  async function addTask(title: string, notes: string, dueDate: string) {
+  async function addTask(title: string, notes: string, dueDate: string, recurrenceType: RecurrenceType | null, recurrenceWeekdays: number[]) {
     if (!title.trim() || isSaving) return false;
     setIsSaving(true);
     setError("");
@@ -36,7 +39,7 @@ export function useTasks() {
       const response = await fetch("/api/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, notes, dueDate }),
+        body: JSON.stringify({ title, notes, dueDate, recurrenceType, recurrenceWeekdays }),
       });
       if (!response.ok) throw new Error();
       const task = (await response.json()) as Task;
@@ -50,7 +53,7 @@ export function useTasks() {
     }
   }
 
-  async function updateTask(id: number, title: string, notes: string, dueDate: string, completed: boolean) {
+  async function updateTask(id: number, title: string, notes: string, dueDate: string, completed: boolean, recurrenceType: RecurrenceType | null, recurrenceWeekdays: number[]) {
     if (!title.trim()) return false;
     const wasCompleted = tasks.find((task) => task.id === id)?.completed ?? false;
     pendingUpdates.current += 1;
@@ -62,11 +65,14 @@ export function useTasks() {
       const response = await fetch("/api/tasks", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, title, notes, dueDate, completed }),
+        body: JSON.stringify({ id, title, notes, dueDate, completed, recurrenceType, recurrenceWeekdays }),
       });
       if (!response.ok) throw new Error();
-      const updatedTask = (await response.json()) as Task;
-      setTasks((current) => current.map((task) => task.id === id ? updatedTask : task));
+      const { task: updatedTask, nextTask } = (await response.json()) as TaskMutation;
+      setTasks((current) => {
+        const updated = current.map((task) => task.id === id ? updatedTask : task);
+        return nextTask && !updated.some((task) => task.id === nextTask.id) ? [...updated, nextTask] : updated;
+      });
       if (!wasCompleted && updatedTask.completed) celebrateTaskCompletion();
       succeeded = true;
     });
@@ -118,6 +124,11 @@ export function useTasks() {
         body: JSON.stringify({ id, completed }),
       });
       if (!response.ok) throw new Error();
+      const { task: updatedTask, nextTask } = (await response.json()) as TaskMutation;
+      setTasks((current) => {
+        const updated = current.map((item) => item.id === id ? updatedTask : item);
+        return nextTask && !updated.some((item) => item.id === nextTask.id) ? [...updated, nextTask] : updated;
+      });
       if (completed) celebrateTaskCompletion();
     } catch {
       setTasks((current) => current.map((item) => item.id === id ? task : item));

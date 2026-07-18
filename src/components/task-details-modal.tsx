@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, X } from "lucide-react";
 import PersianDatePicker from "@/components/persian-date-picker";
+import RecurrencePicker from "@/components/recurrence-picker";
+import type { RecurrenceType } from "@/lib/recurrence";
 import type { Task } from "@/types/task";
 
 export default function TaskDetailsModal({
@@ -18,33 +20,35 @@ export default function TaskDetailsModal({
   error: string;
   isSaving: boolean;
   onClose: () => void;
-  onSave: (title: string, notes: string, dueDate: string, completed: boolean) => Promise<boolean>;
+  onSave: (title: string, notes: string, dueDate: string, completed: boolean, recurrenceType: RecurrenceType | null, recurrenceWeekdays: number[]) => Promise<boolean>;
   onDelete: () => Promise<boolean>;
 }) {
   const [title, setTitle] = useState(task.title);
   const [notes, setNotes] = useState(task.notes ?? "");
   const [dueDate, setDueDate] = useState(task.dueDate ?? "");
   const [completed, setCompleted] = useState(task.completed);
+  const [recurrenceType, setRecurrenceType] = useState<RecurrenceType | null>(task.recurrenceType);
+  const [recurrenceWeekdays, setRecurrenceWeekdays] = useState(task.recurrenceWeekdays);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
-  const lastQueuedSave = useRef(JSON.stringify([task.title, task.notes ?? "", task.dueDate ?? "", task.completed]));
+  const lastQueuedSave = useRef(JSON.stringify([task.title, task.notes ?? "", task.dueDate ?? "", task.completed, task.recurrenceType, task.recurrenceWeekdays]));
 
-  const saveChanges = useCallback((nextTitle: string, nextNotes: string, nextDueDate: string, nextCompleted: boolean) => {
+  const saveChanges = useCallback((nextTitle: string, nextNotes: string, nextDueDate: string, nextCompleted: boolean, nextRecurrenceType: RecurrenceType | null, nextRecurrenceWeekdays: number[]) => {
     const normalizedTitle = nextTitle.trim();
-    if (!normalizedTitle) return;
-    const signature = JSON.stringify([normalizedTitle, nextNotes, nextDueDate, nextCompleted]);
+    if (!normalizedTitle || (nextRecurrenceType && !nextDueDate) || (nextRecurrenceType === "weekly" && nextRecurrenceWeekdays.length === 0)) return;
+    const signature = JSON.stringify([normalizedTitle, nextNotes, nextDueDate, nextCompleted, nextRecurrenceType, nextRecurrenceWeekdays]);
     if (signature === lastQueuedSave.current) return;
     lastQueuedSave.current = signature;
-    void onSave(normalizedTitle, nextNotes, nextDueDate, nextCompleted).then((succeeded) => {
+    void onSave(normalizedTitle, nextNotes, nextDueDate, nextCompleted, nextRecurrenceType, nextRecurrenceWeekdays).then((succeeded) => {
       if (!succeeded && lastQueuedSave.current === signature) lastQueuedSave.current = "";
     });
   }, [onSave]);
 
   const close = useCallback(() => {
-    saveChanges(title || task.title, notes, dueDate, completed);
+    saveChanges(title || task.title, notes, dueDate, completed, recurrenceType, recurrenceWeekdays);
     onClose();
-  }, [completed, dueDate, notes, onClose, saveChanges, task.title, title]);
+  }, [completed, dueDate, notes, onClose, recurrenceType, recurrenceWeekdays, saveChanges, task.title, title]);
 
   useEffect(() => {
     if (isEditingTitle) {
@@ -54,9 +58,9 @@ export default function TaskDetailsModal({
   }, [isEditingTitle]);
 
   useEffect(() => {
-    const timeout = window.setTimeout(() => saveChanges(title, notes, dueDate, completed), 500);
+    const timeout = window.setTimeout(() => saveChanges(title, notes, dueDate, completed, recurrenceType, recurrenceWeekdays), 500);
     return () => window.clearTimeout(timeout);
-  }, [completed, dueDate, notes, saveChanges, title]);
+  }, [completed, dueDate, notes, recurrenceType, recurrenceWeekdays, saveChanges, title]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -71,7 +75,7 @@ export default function TaskDetailsModal({
     const nextTitle = title.trim() || task.title;
     setTitle(nextTitle);
     setIsEditingTitle(false);
-    saveChanges(nextTitle, notes, dueDate, completed);
+    saveChanges(nextTitle, notes, dueDate, completed, recurrenceType, recurrenceWeekdays);
   }
 
   async function handleDelete() {
@@ -97,7 +101,7 @@ export default function TaskDetailsModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="task-details-title"
-        className="w-full max-w-lg rounded-2xl border border-zinc-700 bg-zinc-900 shadow-2xl shadow-black/40"
+        className="max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-zinc-700 bg-zinc-900 shadow-2xl shadow-black/40"
       >
         <div>
           <header className="flex items-center justify-between gap-4 border-b border-zinc-800 px-5 py-4">
@@ -107,7 +111,7 @@ export default function TaskDetailsModal({
                 onClick={() => {
                   const nextCompleted = !completed;
                   setCompleted(nextCompleted);
-                  saveChanges(title, notes, dueDate, nextCompleted);
+                  saveChanges(title, notes, dueDate, nextCompleted, recurrenceType, recurrenceWeekdays);
                 }}
                 aria-label={completed ? "فعال کردن کار" : "انجام‌شده علامت زدن کار"}
                 title={completed ? "فعال کردن" : "انجام‌شده علامت زدن"}
@@ -152,12 +156,19 @@ export default function TaskDetailsModal({
           <div className="space-y-4 px-5 py-5">
             <div>
               <label htmlFor="edit-task-notes" className="mb-1.5 block text-sm font-medium text-zinc-300">یادداشت <span className="font-normal text-zinc-500">(اختیاری)</span></label>
-              <textarea id="edit-task-notes" rows={3} value={notes} onChange={(event) => setNotes(event.target.value)} onBlur={() => saveChanges(title, notes, dueDate, completed)} placeholder="جزئیات را وارد کنید" className="w-full resize-none rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 outline-none placeholder:text-zinc-500 focus:border-zinc-500" />
+              <textarea id="edit-task-notes" rows={3} value={notes} onChange={(event) => setNotes(event.target.value)} onBlur={() => saveChanges(title, notes, dueDate, completed, recurrenceType, recurrenceWeekdays)} placeholder="جزئیات را وارد کنید" className="w-full resize-none rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 outline-none placeholder:text-zinc-500 focus:border-zinc-500" />
             </div>
             <div>
               <label htmlFor="edit-task-due-date" className="mb-1.5 block text-sm font-medium text-zinc-300">تاریخ سررسید <span className="font-normal text-zinc-500">(اختیاری)</span></label>
-              <PersianDatePicker id="edit-task-due-date" value={dueDate} onChange={(nextDueDate) => { setDueDate(nextDueDate); saveChanges(title, notes, nextDueDate, completed); }} />
+              <PersianDatePicker id="edit-task-due-date" value={dueDate} onChange={(nextDueDate) => { setDueDate(nextDueDate); saveChanges(title, notes, nextDueDate, completed, recurrenceType, recurrenceWeekdays); }} />
             </div>
+            <RecurrencePicker
+              dueDate={dueDate}
+              type={recurrenceType}
+              weekdays={recurrenceWeekdays}
+              onTypeChange={setRecurrenceType}
+              onWeekdaysChange={setRecurrenceWeekdays}
+            />
             <AnimatePresence>
               {error && (
                 <motion.p initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} role="alert" className="overflow-hidden rounded-lg bg-red-950 px-3 py-2 text-sm text-red-300">

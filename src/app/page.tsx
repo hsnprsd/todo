@@ -9,6 +9,7 @@ import AddTaskModal from "@/components/add-task-modal";
 import TaskCard from "@/components/task-card";
 import TaskDetailsModal from "@/components/task-details-modal";
 import { useTasks } from "@/hooks/use-tasks";
+import type { RecurrenceType } from "@/lib/recurrence";
 
 export default function Home() {
   const { tasks, isLoading, isSaving, error, clearError, addTask, updateTask, deleteTask, toggleTask, reorderTasks } = useTasks();
@@ -17,6 +18,8 @@ export default function Home() {
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
   const [dueDate, setDueDate] = useState("");
+  const [recurrenceType, setRecurrenceType] = useState<RecurrenceType | null>(null);
+  const [recurrenceWeekdays, setRecurrenceWeekdays] = useState<number[]>([]);
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -31,12 +34,14 @@ export default function Home() {
     setTitle("");
     setNotes("");
     setDueDate("");
+    setRecurrenceType(null);
+    setRecurrenceWeekdays([]);
     setIsAdding(false);
   }
 
   async function submitTask(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (await addTask(title.trim(), notes, dueDate)) closeAddModal();
+    if (await addTask(title.trim(), notes, dueDate, recurrenceType, recurrenceWeekdays)) closeAddModal();
   }
 
   function handleDragEnd({ active, over }: DragEndEvent) {
@@ -109,10 +114,10 @@ export default function Home() {
       )}
 
       <AnimatePresence>
-        {isAdding && <AddTaskModal title={title} notes={notes} dueDate={dueDate} error={error} isSaving={isSaving} onTitleChange={setTitle} onNotesChange={setNotes} onDueDateChange={setDueDate} onClose={closeAddModal} onSubmit={submitTask} />}
+        {isAdding && <AddTaskModal title={title} notes={notes} dueDate={dueDate} recurrenceType={recurrenceType} recurrenceWeekdays={recurrenceWeekdays} error={error} isSaving={isSaving} onTitleChange={setTitle} onNotesChange={setNotes} onDueDateChange={setDueDate} onRecurrenceTypeChange={setRecurrenceType} onRecurrenceWeekdaysChange={setRecurrenceWeekdays} onClose={closeAddModal} onSubmit={submitTask} />}
       </AnimatePresence>
       <AnimatePresence>
-        {selectedTask && <TaskDetailsModal task={selectedTask} error={error} isSaving={isSaving} onClose={() => setSelectedTaskId(null)} onSave={(nextTitle, nextNotes, nextDueDate, completed) => updateTask(selectedTask.id, nextTitle, nextNotes, nextDueDate, completed)} onDelete={() => deleteTask(selectedTask.id)} />}
+        {selectedTask && <TaskDetailsModal task={selectedTask} error={error} isSaving={isSaving} onClose={() => setSelectedTaskId(null)} onSave={(nextTitle, nextNotes, nextDueDate, completed, nextRecurrenceType, nextRecurrenceWeekdays) => updateTask(selectedTask.id, nextTitle, nextNotes, nextDueDate, completed, nextRecurrenceType, nextRecurrenceWeekdays)} onDelete={() => deleteTask(selectedTask.id)} />}
       </AnimatePresence>
     </motion.div>
   );

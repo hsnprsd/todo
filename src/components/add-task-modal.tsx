@@ -4,27 +4,37 @@ import { FormEvent, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import PersianDatePicker from "@/components/persian-date-picker";
+import RecurrencePicker from "@/components/recurrence-picker";
+import type { RecurrenceType } from "@/lib/recurrence";
 
 export default function AddTaskModal({
   title,
   notes,
   dueDate,
+  recurrenceType,
+  recurrenceWeekdays,
   error,
   isSaving,
   onTitleChange,
   onNotesChange,
   onDueDateChange,
+  onRecurrenceTypeChange,
+  onRecurrenceWeekdaysChange,
   onClose,
   onSubmit,
 }: {
   title: string;
   notes: string;
   dueDate: string;
+  recurrenceType: RecurrenceType | null;
+  recurrenceWeekdays: number[];
   error: string;
   isSaving: boolean;
   onTitleChange: (value: string) => void;
   onNotesChange: (value: string) => void;
   onDueDateChange: (value: string) => void;
+  onRecurrenceTypeChange: (value: RecurrenceType | null) => void;
+  onRecurrenceWeekdaysChange: (value: number[]) => void;
   onClose: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
@@ -52,7 +62,7 @@ export default function AddTaskModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="add-task-title"
-        className="w-full max-w-lg rounded-2xl border border-zinc-700 bg-zinc-900 shadow-2xl shadow-black/40"
+        className="max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-zinc-700 bg-zinc-900 shadow-2xl shadow-black/40"
       >
         <form onSubmit={onSubmit}>
           <header className="flex items-center justify-between border-b border-zinc-800 px-5 py-4">
@@ -75,6 +85,13 @@ export default function AddTaskModal({
               <label htmlFor="task-due-date" className="mb-1.5 block text-sm font-medium text-zinc-300">تاریخ سررسید <span className="font-normal text-zinc-500">(اختیاری)</span></label>
               <PersianDatePicker id="task-due-date" value={dueDate} onChange={onDueDateChange} />
             </div>
+            <RecurrencePicker
+              dueDate={dueDate}
+              type={recurrenceType}
+              weekdays={recurrenceWeekdays}
+              onTypeChange={onRecurrenceTypeChange}
+              onWeekdaysChange={onRecurrenceWeekdaysChange}
+            />
             <AnimatePresence>
               {error && (
                 <motion.p initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} role="alert" className="overflow-hidden rounded-lg bg-red-950 px-3 py-2 text-sm text-red-300">
@@ -86,7 +103,7 @@ export default function AddTaskModal({
 
           <footer className="flex justify-end gap-2 border-t border-zinc-800 px-5 py-4">
             <button type="button" onClick={onClose} disabled={isSaving} className="rounded-lg px-3 py-2 text-sm font-medium text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 disabled:opacity-40">انصراف</button>
-            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} type="submit" disabled={!title.trim() || isSaving} className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-40">{isSaving ? "در حال افزودن…" : "افزودن کار"}</motion.button>
+            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} type="submit" disabled={!title.trim() || isSaving || Boolean(recurrenceType && !dueDate) || Boolean(recurrenceType === "weekly" && recurrenceWeekdays.length === 0)} className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-40">{isSaving ? "در حال افزودن…" : "افزودن کار"}</motion.button>
           </footer>
         </form>
       </motion.div>
