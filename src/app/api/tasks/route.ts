@@ -61,6 +61,7 @@ export async function PATCH(request: Request) {
   const body = (await request.json()) as {
     id?: unknown;
     completed?: unknown;
+    dueDate?: unknown;
     orderedIds?: unknown;
   };
 
@@ -82,8 +83,28 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ success: true });
   }
 
+  if (typeof body.id === "number" && typeof body.dueDate === "string") {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(body.dueDate)) {
+      return NextResponse.json({ error: "Due date must be a valid date." }, { status: 400 });
+    }
+
+    const result = db
+      .prepare("UPDATE tasks SET due_date = ? WHERE id = ?")
+      .run(body.dueDate, body.id);
+
+    if (result.changes === 0) {
+      return NextResponse.json({ error: "Task not found." }, { status: 404 });
+    }
+
+    const task = db
+      .prepare(`SELECT ${taskSelection} FROM tasks WHERE id = ?`)
+      .get(body.id) as TaskRow;
+
+    return NextResponse.json(serializeTask(task));
+  }
+
   if (typeof body.id !== "number" || typeof body.completed !== "boolean") {
-    return NextResponse.json({ error: "A valid task id and completed value are required." }, { status: 400 });
+    return NextResponse.json({ error: "A valid task update is required." }, { status: 400 });
   }
 
   const result = db
