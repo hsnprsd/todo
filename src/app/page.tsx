@@ -55,6 +55,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [showCompleted, setShowCompleted] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -242,7 +243,7 @@ export default function Home() {
               {activeTasks.map((task) => (
                 <li
                   key={task.id}
-                  className="flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800 px-2 py-2 shadow-sm shadow-black/20"
+                  className="flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800 px-2 py-2 shadow-sm shadow-black/20 transition-colors hover:border-zinc-600"
                 >
                   <button
                     type="button"
@@ -253,18 +254,19 @@ export default function Home() {
                   >
                     <Check aria-hidden="true" className="size-3.5" />
                   </button>
-                  <div className="min-w-0 flex-1">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedTask(task)}
+                    className="min-w-0 flex-1 text-left"
+                  >
                     <span className="block truncate text-sm text-zinc-200">{task.title}</span>
-                    {task.notes && (
-                      <p className="mt-0.5 truncate text-xs text-zinc-500">{task.notes}</p>
-                    )}
                     {task.dueDate && (
-                      <p className="mt-1 flex items-center gap-1 text-xs text-zinc-400">
+                      <span className="mt-1 flex items-center gap-1 text-xs text-zinc-400">
                         <CalendarDays aria-hidden="true" className="size-3" />
                         {formatDueDate(task.dueDate)}
-                      </p>
+                      </span>
                     )}
-                  </div>
+                  </button>
                 </li>
               ))}
 
@@ -283,7 +285,7 @@ export default function Home() {
               {showCompleted && completedTasks.map((task) => (
                 <li
                   key={task.id}
-                  className="flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800 px-2 py-2 shadow-sm shadow-black/20"
+                  className="flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800 px-2 py-2 shadow-sm shadow-black/20 transition-colors hover:border-zinc-600"
                 >
                   <button
                     type="button"
@@ -294,18 +296,19 @@ export default function Home() {
                   >
                     <Check aria-hidden="true" className="size-3.5" />
                   </button>
-                  <div className="min-w-0 flex-1">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedTask(task)}
+                    className="min-w-0 flex-1 text-left"
+                  >
                     <span className="block truncate text-sm text-zinc-500 line-through">{task.title}</span>
-                    {task.notes && (
-                      <p className="mt-0.5 truncate text-xs text-zinc-600">{task.notes}</p>
-                    )}
                     {task.dueDate && (
-                      <p className="mt-1 flex items-center gap-1 text-xs text-zinc-500">
+                      <span className="mt-1 flex items-center gap-1 text-xs text-zinc-500">
                         <CalendarDays aria-hidden="true" className="size-3" />
                         {formatDueDate(task.dueDate)}
-                      </p>
+                      </span>
                     )}
-                  </div>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -416,6 +419,62 @@ export default function Home() {
                 </button>
               </footer>
             </form>
+          </div>
+        </div>
+      )}
+
+      {selectedTask && (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4 backdrop-blur-sm"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setSelectedTask(null);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="task-details-title"
+            onKeyDown={(event) => {
+              if (event.key === "Escape") setSelectedTask(null);
+            }}
+            className="w-full max-w-lg rounded-2xl border border-zinc-700 bg-zinc-900 shadow-2xl shadow-black/40"
+          >
+            <header className="flex items-center justify-between border-b border-zinc-800 px-5 py-4">
+              <h2 id="task-details-title" className="text-lg font-semibold">Task details</h2>
+              <button
+                type="button"
+                autoFocus
+                onClick={() => setSelectedTask(null)}
+                aria-label="Close"
+                className="grid size-8 place-items-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
+              >
+                <X aria-hidden="true" className="size-4" />
+              </button>
+            </header>
+
+            <div className="space-y-5 px-5 py-5">
+              <div>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-zinc-500">Title</p>
+                <p className="text-zinc-100">{selectedTask.title}</p>
+              </div>
+              <div>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-zinc-500">Notes</p>
+                <p className="whitespace-pre-wrap text-sm leading-6 text-zinc-300">
+                  {selectedTask.notes || "No notes"}
+                </p>
+              </div>
+              <div>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-zinc-500">Due date</p>
+                <p className="flex items-center gap-2 text-sm text-zinc-300">
+                  <CalendarDays aria-hidden="true" className="size-4 text-zinc-500" />
+                  {selectedTask.dueDate ? formatDueDate(selectedTask.dueDate) : "No due date"}
+                </p>
+              </div>
+              <div>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-zinc-500">Status</p>
+                <p className="text-sm text-zinc-300">{selectedTask.completed ? "Completed" : "Active"}</p>
+              </div>
+            </div>
           </div>
         </div>
       )}
