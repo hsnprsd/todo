@@ -10,7 +10,7 @@ import TaskDetailsModal from "@/components/task-details-modal";
 import { useTasks } from "@/hooks/use-tasks";
 
 export default function Home() {
-  const { tasks, isLoading, isSaving, error, clearError, addTask, toggleTask, reorderTasks } = useTasks();
+  const { tasks, isLoading, isSaving, error, clearError, addTask, updateTask, toggleTask, reorderTasks } = useTasks();
   const [showCompleted, setShowCompleted] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [title, setTitle] = useState("");
@@ -71,14 +71,14 @@ export default function Home() {
               </section></li>
             )}
             <SortableContext items={activeTasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
-              {activeTasks.map((task) => <TaskCard key={task.id} task={task} onToggle={toggleTask} onOpen={(item) => setSelectedTaskId(item.id)} />)}
+              {activeTasks.map((task) => <TaskCard key={task.id} task={task} onToggle={toggleTask} onOpen={(item) => { clearError(); setSelectedTaskId(item.id); }} />)}
             </SortableContext>
             {completedTasks.length > 0 && (
               <li className="py-1 text-center"><button type="button" onClick={() => setShowCompleted((current) => !current)} className="text-sm font-medium text-zinc-400 hover:text-zinc-100">{showCompleted ? "Hide completed" : `Show completed (${completedTasks.length})`}</button></li>
             )}
             {showCompleted && (
               <SortableContext items={completedTasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
-                {completedTasks.map((task) => <TaskCard key={task.id} task={task} onToggle={toggleTask} onOpen={(item) => setSelectedTaskId(item.id)} />)}
+                {completedTasks.map((task) => <TaskCard key={task.id} task={task} onToggle={toggleTask} onOpen={(item) => { clearError(); setSelectedTaskId(item.id); }} />)}
               </SortableContext>
             )}
           </ul>
@@ -86,7 +86,7 @@ export default function Home() {
       )}
 
       {isAdding && <AddTaskModal title={title} notes={notes} dueDate={dueDate} error={error} isSaving={isSaving} onTitleChange={setTitle} onNotesChange={setNotes} onDueDateChange={setDueDate} onClose={closeAddModal} onSubmit={submitTask} />}
-      {selectedTask && <TaskDetailsModal task={selectedTask} onClose={() => setSelectedTaskId(null)} />}
+      {selectedTask && <TaskDetailsModal task={selectedTask} error={error} isSaving={isSaving} onClose={() => setSelectedTaskId(null)} onSave={(nextTitle, nextNotes, nextDueDate, completed) => updateTask(selectedTask.id, nextTitle, nextNotes, nextDueDate, completed)} />}
     </div>
   );
 }

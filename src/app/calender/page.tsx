@@ -70,7 +70,7 @@ function DayColumn({ date, tasks, previewTask, onAdd, onToggle, onOpen }: { date
 }
 
 export default function CalendarPage() {
-  const { tasks, isLoading, isSaving, error, clearError, addTask, toggleTask, moveTaskToDate } = useTasks();
+  const { tasks, isLoading, isSaving, error, clearError, addTask, updateTask, toggleTask, moveTaskToDate } = useTasks();
   const [dayOffset, setDayOffset] = useState(0);
   const [isAdding, setIsAdding] = useState(false);
   const [taskTitle, setTaskTitle] = useState("");
@@ -169,7 +169,7 @@ export default function CalendarPage() {
                 ? { ...activeTask, dueDate: dateKey }
                 : undefined;
               const dayTasks = tasks.filter((task) => task.dueDate === dateKey);
-              return <DayColumn key={dateKey} date={date} tasks={dayTasks} previewTask={previewTask} onAdd={openAddModal} onToggle={toggleTask} onOpen={(task) => setSelectedTaskId(task.id)} />;
+              return <DayColumn key={dateKey} date={date} tasks={dayTasks} previewTask={previewTask} onAdd={openAddModal} onToggle={toggleTask} onOpen={(task) => { clearError(); setSelectedTaskId(task.id); }} />;
             })}
           </div></div>
           <DragOverlay>
@@ -191,7 +191,7 @@ export default function CalendarPage() {
           onSubmit={submitTask}
         />
       )}
-      {selectedTask && <TaskDetailsModal task={selectedTask} onClose={() => setSelectedTaskId(null)} />}
+      {selectedTask && <TaskDetailsModal task={selectedTask} error={error} isSaving={isSaving} onClose={() => setSelectedTaskId(null)} onSave={(nextTitle, nextNotes, nextDueDate, completed) => updateTask(selectedTask.id, nextTitle, nextNotes, nextDueDate, completed)} />}
     </div>
   );
 }

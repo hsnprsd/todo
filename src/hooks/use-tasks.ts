@@ -47,6 +47,28 @@ export function useTasks() {
     }
   }
 
+  async function updateTask(id: number, title: string, notes: string, dueDate: string, completed: boolean) {
+    if (!title.trim() || isSaving) return false;
+    setIsSaving(true);
+    setError("");
+    try {
+      const response = await fetch("/api/tasks", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, title, notes, dueDate, completed }),
+      });
+      if (!response.ok) throw new Error();
+      const updatedTask = (await response.json()) as Task;
+      setTasks((current) => current.map((task) => task.id === id ? updatedTask : task));
+      return true;
+    } catch {
+      setError("Could not update the task. Please try again.");
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
   async function toggleTask(id: number) {
     const task = tasks.find((item) => item.id === id);
     if (!task) return;
@@ -118,6 +140,7 @@ export function useTasks() {
     error,
     clearError: () => setError(""),
     addTask,
+    updateTask,
     toggleTask,
     moveTaskToDate,
     reorderTasks,
