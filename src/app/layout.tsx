@@ -14,6 +14,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fa" dir="rtl" className="h-full antialiased">
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `try{if(localStorage.getItem("todo-sidebar-collapsed")==="true")document.documentElement.classList.add("sidebar-collapsed")}catch{}` }} />
+      </head>
       <body className="min-h-full">
         <div className="flex min-h-screen bg-zinc-900 text-zinc-100">
           <Sidebar />

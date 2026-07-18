@@ -17,3 +17,18 @@ body {
   color: var(--foreground);
   font-family: Tahoma, Arial, sans-serif;
 }
+
+@media (min-width: 768px) {
+  .sidebar-collapsed [data-sidebar] {
+    width: 5rem;
+    padding-inline: 0.75rem;
+  }
+
+  .sidebar-collapsed [data-sidebar-item] {
+    justify-content: center;
+  }
+
+  .sidebar-collapsed [data-sidebar-label] {
+    display: none;
+  }
+}
