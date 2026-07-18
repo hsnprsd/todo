@@ -20,7 +20,6 @@ function Icon({ name }: { name: string }) {
     calendar: <path d="M6 3v3m12-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z" />,
     clock: <path d="M12 7v5l3 2m6-2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />,
     plus: <path d="M12 5v14M5 12h14" />,
-    search: <path d="m20 20-4.2-4.2m1.2-5.3a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" />,
     close: <path d="m6 6 12 12M18 6 6 18" />,
   };
 
@@ -172,9 +171,6 @@ export default function Home() {
               <p className="mb-1 text-sm text-zinc-500">Saturday, July 18</p>
               <h1 className="text-3xl font-bold tracking-tight">Inbox</h1>
             </div>
-            <button aria-label="Search" className="grid size-10 place-items-center rounded-full border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100">
-              <Icon name="search" />
-            </button>
           </header>
 
           {isAdding ? (
