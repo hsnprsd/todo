@@ -20,7 +20,7 @@ function serializeTask(task: TaskRow) {
 
 export function GET() {
   const tasks = db
-    .prepare(`SELECT ${taskSelection} FROM tasks ORDER BY id ASC`)
+    .prepare(`SELECT ${taskSelection} FROM tasks ORDER BY sort_order ASC, id ASC`)
     .all() as TaskRow[];
 
   return NextResponse.json(tasks.map(serializeTask));
@@ -45,7 +45,10 @@ export async function POST(request: Request) {
   }
 
   const result = db
-    .prepare("INSERT INTO tasks (title, notes, due_date) VALUES (?, ?, ?)")
+    .prepare(`
+      INSERT INTO tasks (title, notes, due_date, sort_order)
+      VALUES (?, ?, ?, COALESCE((SELECT MAX(sort_order) + 1 FROM tasks), 1))
+    `)
     .run(title, notes, dueDate);
   const task = db
     .prepare(`SELECT ${taskSelection} FROM tasks WHERE id = ?`)
@@ -58,7 +61,26 @@ export async function PATCH(request: Request) {
   const body = (await request.json()) as {
     id?: unknown;
     completed?: unknown;
+    orderedIds?: unknown;
   };
+
+  if (Array.isArray(body.orderedIds)) {
+    const orderedIds = body.orderedIds;
+    const hasInvalidId = orderedIds.some(
+      (id) => typeof id !== "number" || !Number.isInteger(id),
+    );
+
+    if (hasInvalidId || new Set(orderedIds).size !== orderedIds.length) {
+      return NextResponse.json({ error: "A valid task order is required." }, { status: 400 });
+    }
+
+    const updateOrder = db.prepare("UPDATE tasks SET sort_order = ? WHERE id = ?");
+    db.transaction((ids: number[]) => {
+      ids.forEach((id, index) => updateOrder.run(index + 1, id));
+    })(orderedIds as number[]);
+
+    return NextResponse.json({ success: true });
+  }
 
   if (typeof body.id !== "number" || typeof body.completed !== "boolean") {
     return NextResponse.json({ error: "A valid task id and completed value are required." }, { status: 400 });

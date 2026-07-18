@@ -22,6 +22,7 @@ db.exec(`
     title TEXT NOT NULL,
     notes TEXT,
     due_date TEXT,
+    sort_order INTEGER NOT NULL DEFAULT 0,
     completed INTEGER NOT NULL DEFAULT 0 CHECK (completed IN (0, 1)),
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   )
@@ -36,4 +37,9 @@ if (!taskColumnNames.has("notes")) {
 
 if (!taskColumnNames.has("due_date")) {
   db.exec("ALTER TABLE tasks ADD COLUMN due_date TEXT");
+}
+
+if (!taskColumnNames.has("sort_order")) {
+  db.exec("ALTER TABLE tasks ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0");
+  db.exec("UPDATE tasks SET sort_order = id");
 }

@@ -1,6 +1,23 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import {
+  closestCenter,
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { CalendarDays, Check, X } from "lucide-react";
 
 const navItems = [
@@ -46,6 +63,64 @@ function formatDueDate(dueDate: string) {
   }).format(new Date(`${dueDate}T00:00:00`));
 }
 
+function SortableTaskCard({
+  task,
+  onToggle,
+  onOpen,
+}: {
+  task: Task;
+  onToggle: (id: number) => void;
+  onOpen: (task: Task) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id });
+
+  return (
+    <li
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      {...attributes}
+      {...listeners}
+      className={`flex cursor-grab touch-none items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800 px-2 py-2 shadow-sm shadow-black/20 transition-colors hover:border-zinc-600 active:cursor-grabbing ${
+        isDragging ? "z-10 opacity-70 shadow-lg" : ""
+      }`}
+    >
+      <button
+        type="button"
+        onClick={() => onToggle(task.id)}
+        aria-label={`Mark ${task.title} as ${task.completed ? "incomplete" : "complete"}`}
+        title={`Mark as ${task.completed ? "incomplete" : "complete"}`}
+        className={`grid size-6 shrink-0 place-items-center rounded-md transition-colors hover:bg-green-500/20 hover:text-green-400 ${
+          task.completed ? "bg-zinc-700 text-zinc-100" : "text-zinc-400"
+        }`}
+      >
+        <Check aria-hidden="true" className="size-3.5" />
+      </button>
+      <button
+        type="button"
+        onClick={() => onOpen(task)}
+        className="min-w-0 flex-1 text-left"
+      >
+        <span className={`block truncate text-sm ${task.completed ? "text-zinc-500 line-through" : "text-zinc-200"}`}>
+          {task.title}
+        </span>
+        {task.dueDate && (
+          <span className={`mt-1 flex items-center gap-1 text-xs ${task.completed ? "text-zinc-500" : "text-zinc-400"}`}>
+            <CalendarDays aria-hidden="true" className="size-3" />
+            {formatDueDate(task.dueDate)}
+          </span>
+        )}
+      </button>
+    </li>
+  );
+}
+
 export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isAdding, setIsAdding] = useState(false);
@@ -57,6 +132,10 @@ export default function Home() {
   const [showCompleted, setShowCompleted] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [error, setError] = useState("");
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   useEffect(() => {
     async function loadTasks() {
@@ -134,6 +213,41 @@ export default function Home() {
         ),
       );
       setError("Could not update the task. Please try again.");
+    }
+  }
+
+  async function reorderTasks(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const draggedTask = tasks.find((task) => task.id === active.id);
+    const targetTask = tasks.find((task) => task.id === over.id);
+    if (!draggedTask || !targetTask || draggedTask.completed !== targetTask.completed) return;
+
+    const group = tasks.filter((task) => task.completed === draggedTask.completed);
+    const oldIndex = group.findIndex((task) => task.id === active.id);
+    const newIndex = group.findIndex((task) => task.id === over.id);
+    const reorderedGroup = arrayMove(group, oldIndex, newIndex);
+    let groupIndex = 0;
+    const reorderedTasks = tasks.map((task) =>
+      task.completed === draggedTask.completed
+        ? reorderedGroup[groupIndex++]
+        : task,
+    );
+
+    setTasks(reorderedTasks);
+    setError("");
+
+    try {
+      const response = await fetch("/api/tasks", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderedIds: reorderedTasks.map((task) => task.id) }),
+      });
+      if (!response.ok) throw new Error("Could not reorder tasks.");
+    } catch {
+      setTasks(tasks);
+      setError("Could not reorder the tasks. Please try again.");
     }
   }
 
@@ -225,93 +339,69 @@ export default function Home() {
           {isLoading ? (
             <p className="py-8 text-center text-sm text-zinc-500">Loading tasks…</p>
           ) : (
-            <ul className="space-y-2">
-              {activeTasks.length === 0 && (
-                <li>
-                  <section className="rounded-2xl border border-zinc-700 bg-zinc-800 p-8 text-center shadow-sm shadow-black/20">
-                    <div className="mx-auto mb-4 grid size-12 place-items-center rounded-full bg-zinc-700 text-zinc-300">
-                      <Icon name="tray" />
-                    </div>
-                    <h2 className="font-semibold">Your inbox is clear</h2>
-                    <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-zinc-500">
-                      Capture tasks as they come to you. You can organize them into lists later.
-                    </p>
-                  </section>
-                </li>
-              )}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={reorderTasks}
+            >
+              <ul className="space-y-2">
+                {activeTasks.length === 0 && (
+                  <li>
+                    <section className="rounded-2xl border border-zinc-700 bg-zinc-800 p-8 text-center shadow-sm shadow-black/20">
+                      <div className="mx-auto mb-4 grid size-12 place-items-center rounded-full bg-zinc-700 text-zinc-300">
+                        <Icon name="tray" />
+                      </div>
+                      <h2 className="font-semibold">Your inbox is clear</h2>
+                      <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-zinc-500">
+                        Capture tasks as they come to you. You can organize them into lists later.
+                      </p>
+                    </section>
+                  </li>
+                )}
 
-              {activeTasks.map((task) => (
-                <li
-                  key={task.id}
-                  className="flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800 px-2 py-2 shadow-sm shadow-black/20 transition-colors hover:border-zinc-600"
+                <SortableContext
+                  items={activeTasks.map((task) => task.id)}
+                  strategy={verticalListSortingStrategy}
                 >
-                  <button
-                    type="button"
-                    onClick={() => toggleTask(task.id)}
-                    aria-label={`Mark ${task.title} as complete`}
-                    title="Mark as complete"
-                    className="grid size-6 shrink-0 place-items-center rounded-md text-zinc-400 transition-colors hover:bg-green-500/15 hover:text-green-400"
-                  >
-                    <Check aria-hidden="true" className="size-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedTask(task)}
-                    className="min-w-0 flex-1 text-left"
-                  >
-                    <span className="block truncate text-sm text-zinc-200">{task.title}</span>
-                    {task.dueDate && (
-                      <span className="mt-1 flex items-center gap-1 text-xs text-zinc-400">
-                        <CalendarDays aria-hidden="true" className="size-3" />
-                        {formatDueDate(task.dueDate)}
-                      </span>
-                    )}
-                  </button>
-                </li>
-              ))}
+                  {activeTasks.map((task) => (
+                    <SortableTaskCard
+                      key={task.id}
+                      task={task}
+                      onToggle={toggleTask}
+                      onOpen={setSelectedTask}
+                    />
+                  ))}
+                </SortableContext>
 
-              {completedTasks.length > 0 && (
-                <li className="py-1 text-center">
-                  <button
-                    type="button"
-                    onClick={() => setShowCompleted((current) => !current)}
-                    className="text-sm font-medium text-zinc-400 transition-colors hover:text-zinc-100"
-                  >
-                    {showCompleted ? "Hide completed" : `Show completed (${completedTasks.length})`}
-                  </button>
-                </li>
-              )}
+                {completedTasks.length > 0 && (
+                  <li className="py-1 text-center">
+                    <button
+                      type="button"
+                      onClick={() => setShowCompleted((current) => !current)}
+                      className="text-sm font-medium text-zinc-400 transition-colors hover:text-zinc-100"
+                    >
+                      {showCompleted ? "Hide completed" : `Show completed (${completedTasks.length})`}
+                    </button>
+                  </li>
+                )}
 
-              {showCompleted && completedTasks.map((task) => (
-                <li
-                  key={task.id}
-                  className="flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800 px-2 py-2 shadow-sm shadow-black/20 transition-colors hover:border-zinc-600"
-                >
-                  <button
-                    type="button"
-                    onClick={() => toggleTask(task.id)}
-                    aria-label={`Mark ${task.title} as incomplete`}
-                    title="Mark as incomplete"
-                    className="grid size-6 shrink-0 place-items-center rounded-md bg-zinc-700 text-zinc-100 transition-colors hover:bg-green-500/20 hover:text-green-400"
+                {showCompleted && (
+                  <SortableContext
+                    items={completedTasks.map((task) => task.id)}
+                    strategy={verticalListSortingStrategy}
                   >
-                    <Check aria-hidden="true" className="size-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedTask(task)}
-                    className="min-w-0 flex-1 text-left"
-                  >
-                    <span className="block truncate text-sm text-zinc-500 line-through">{task.title}</span>
-                    {task.dueDate && (
-                      <span className="mt-1 flex items-center gap-1 text-xs text-zinc-500">
-                        <CalendarDays aria-hidden="true" className="size-3" />
-                        {formatDueDate(task.dueDate)}
-                      </span>
-                    )}
-                  </button>
-                </li>
-              ))}
-            </ul>
+                    {completedTasks.map((task) => (
+                      <SortableTaskCard
+                        key={task.id}
+                        task={task}
+                        onToggle={toggleTask}
+                        onOpen={setSelectedTask}
+                      />
+                    ))}
+                  </SortableContext>
+                )}
+              </ul>
+            </DndContext>
           )}
         </div>
       </main>
