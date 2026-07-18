@@ -240,9 +240,12 @@ export default function Home() {
               </p>
             </section>
           ) : (
-            <ul className="divide-y divide-zinc-700 rounded-2xl border border-zinc-700 bg-zinc-800 px-4 shadow-sm shadow-black/20">
+            <ul className="space-y-3">
               {tasks.map((task) => (
-                <li key={task.id} className="flex items-center gap-3 py-4">
+                <li
+                  key={task.id}
+                  className="flex items-center gap-3 rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-4 shadow-sm shadow-black/20"
+                >
                   <input
                     type="checkbox"
                     checked={task.completed}
