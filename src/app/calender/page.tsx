@@ -30,12 +30,26 @@ function DayColumn({ date, tasks, previewTask, onAdd, onToggle, onOpen }: { date
   const activeTasks = tasks.filter((task) => !task.completed);
   const completedTasks = tasks.filter((task) => task.completed);
   const visibleTasks = showCompleted ? [...activeTasks, ...completedTasks] : activeTasks;
+  const progress = tasks.length === 0 ? 0 : Math.round((completedTasks.length / tasks.length) * 100);
 
   return (
     <section ref={setNodeRef} className={`min-h-80 rounded-2xl border bg-zinc-900 p-3 transition-colors ${isOver ? "border-sky-500 bg-sky-950/20" : "border-zinc-700"}`}>
       <header className="mb-3 border-b border-zinc-800 pb-3">
         <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">{new Intl.DateTimeFormat("fa-IR-u-ca-persian", { weekday: "short" }).format(date)}</p>
         <p className="mt-1 text-lg font-semibold text-zinc-200">{new Intl.DateTimeFormat("fa-IR-u-ca-persian", { month: "short", day: "numeric" }).format(date)}</p>
+        <div className="mt-3 flex items-center gap-2">
+          <div
+            role="progressbar"
+            aria-label="پیشرفت کارهای روز"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={progress}
+            className="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-800"
+          >
+            <div className="h-full rounded-full bg-green-500 transition-[width] duration-300" style={{ width: `${progress}%` }} />
+          </div>
+          <span className="w-9 text-left text-xs tabular-nums text-zinc-500">{new Intl.NumberFormat("fa-IR").format(progress)}٪</span>
+        </div>
       </header>
       <button
         type="button"
