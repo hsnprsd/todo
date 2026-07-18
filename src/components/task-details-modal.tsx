@@ -31,6 +31,15 @@ export default function TaskDetailsModal({
     }
   }, [isEditingTitle]);
 
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape" && !isSaving) onClose();
+    }
+
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => window.removeEventListener("keydown", handleKeyDown, true);
+  }, [isSaving, onClose]);
+
   function finishEditingTitle() {
     if (!title.trim()) setTitle(task.title);
     setIsEditingTitle(false);
@@ -48,7 +57,7 @@ export default function TaskDetailsModal({
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4 backdrop-blur-sm" onMouseDown={(event) => event.target === event.currentTarget && close()}>
       <div role="dialog" aria-modal="true" aria-labelledby="task-details-title" className="w-full max-w-lg rounded-2xl border border-zinc-700 bg-zinc-900 shadow-2xl shadow-black/40">
-        <form onSubmit={handleSubmit} onKeyDown={(event) => event.key === "Escape" && close()}>
+        <form onSubmit={handleSubmit}>
           <header className="flex items-center justify-between gap-4 border-b border-zinc-800 px-5 py-4">
             <h2 id="task-details-title" className="flex min-w-0 flex-1 items-center gap-2 text-lg font-semibold">
               <button
@@ -70,9 +79,6 @@ export default function TaskDetailsModal({
                   onKeyDown={(event) => {
                     if (event.key === "Enter") {
                       event.preventDefault();
-                      finishEditingTitle();
-                    } else if (event.key === "Escape") {
-                      event.stopPropagation();
                       finishEditingTitle();
                     }
                   }}

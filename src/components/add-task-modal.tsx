@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent } from "react";
+import { FormEvent, useEffect } from "react";
 import { X } from "lucide-react";
 
 export default function AddTaskModal({
@@ -26,13 +26,22 @@ export default function AddTaskModal({
   onClose: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape" && !isSaving) onClose();
+    }
+
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => window.removeEventListener("keydown", handleKeyDown, true);
+  }, [isSaving, onClose]);
+
   return (
     <div
       className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4 backdrop-blur-sm"
       onMouseDown={(event) => event.target === event.currentTarget && onClose()}
     >
       <div role="dialog" aria-modal="true" aria-labelledby="add-task-title" className="w-full max-w-lg rounded-2xl border border-zinc-700 bg-zinc-900 shadow-2xl shadow-black/40">
-        <form onSubmit={onSubmit} onKeyDown={(event) => event.key === "Escape" && onClose()}>
+        <form onSubmit={onSubmit}>
           <header className="flex items-center justify-between border-b border-zinc-800 px-5 py-4">
             <h2 id="add-task-title" className="text-lg font-semibold">افزودن کار</h2>
             <button type="button" onClick={onClose} disabled={isSaving} aria-label="بستن" className="grid size-8 place-items-center rounded-lg text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 disabled:opacity-40">
