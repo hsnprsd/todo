@@ -23,21 +23,37 @@ function addDays(date: Date, days: number) {
 }
 
 function DayColumn({ date, tasks, previewTask, onToggle, onOpen }: { date: Date; tasks: Task[]; previewTask?: Task; onToggle: (id: number) => void; onOpen: (task: Task) => void }) {
+  const [showCompleted, setShowCompleted] = useState(false);
   const dateKey = toDateKey(date);
   const { setNodeRef, isOver } = useDroppable({ id: `day:${dateKey}` });
+  const activeTasks = tasks.filter((task) => !task.completed);
+  const completedTasks = tasks.filter((task) => task.completed);
+  const visibleTasks = showCompleted ? [...activeTasks, ...completedTasks] : activeTasks;
+
   return (
     <section ref={setNodeRef} className={`min-h-80 rounded-2xl border bg-zinc-900 p-3 transition-colors ${isOver ? "border-sky-500 bg-sky-950/20" : "border-zinc-700"}`}>
       <header className="mb-3 border-b border-zinc-800 pb-3">
         <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">{new Intl.DateTimeFormat("en", { weekday: "short" }).format(date)}</p>
         <p className="mt-1 text-lg font-semibold text-zinc-200">{new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(date)}</p>
       </header>
-      <SortableContext items={tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
+      <SortableContext items={visibleTasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
         <ul className="space-y-2">
-          {tasks.map((task) => <TaskCard key={task.id} task={task} onToggle={onToggle} onOpen={onOpen} keepInPlace />)}
-          {previewTask && <li><TaskCardPreview task={previewTask} faded /></li>}
+          {activeTasks.map((task) => <TaskCard key={task.id} task={task} onToggle={onToggle} onOpen={onOpen} keepInPlace />)}
+          {activeTasks.length === 0 && !previewTask && (
+            <li><p className="py-8 text-center text-xs text-zinc-600">Drop tasks here</p></li>
+          )}
+          {previewTask && !previewTask.completed && <li><TaskCardPreview task={previewTask} faded /></li>}
+          {completedTasks.length > 0 && (
+            <li className="py-1 text-center">
+              <button type="button" onClick={() => setShowCompleted((current) => !current)} className="text-xs font-medium text-zinc-400 transition-colors hover:text-zinc-100">
+                {showCompleted ? "Hide completed" : `Show completed (${completedTasks.length})`}
+              </button>
+            </li>
+          )}
+          {showCompleted && completedTasks.map((task) => <TaskCard key={task.id} task={task} onToggle={onToggle} onOpen={onOpen} keepInPlace />)}
+          {previewTask && previewTask.completed && <li><TaskCardPreview task={previewTask} faded /></li>}
         </ul>
       </SortableContext>
-      {tasks.length === 0 && !previewTask && <p className="py-8 text-center text-xs text-zinc-600">Drop tasks here</p>}
     </section>
   );
 }
@@ -118,7 +134,8 @@ export default function CalendarPage() {
               const previewTask = activeTask && dragPreview?.dueDate === dateKey
                 ? { ...activeTask, dueDate: dateKey }
                 : undefined;
-              return <DayColumn key={dateKey} date={date} tasks={tasks.filter((task) => !task.completed && task.dueDate === dateKey)} previewTask={previewTask} onToggle={toggleTask} onOpen={(task) => setSelectedTaskId(task.id)} />;
+              const dayTasks = tasks.filter((task) => task.dueDate === dateKey);
+              return <DayColumn key={dateKey} date={date} tasks={dayTasks} previewTask={previewTask} onToggle={toggleTask} onOpen={(task) => setSelectedTaskId(task.id)} />;
             })}
           </div></div>
           <DragOverlay>
