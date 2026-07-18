@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Check, X } from "lucide-react";
 import type { Task } from "@/types/task";
 
@@ -81,8 +82,22 @@ export default function TaskDetailsModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4 backdrop-blur-sm" onMouseDown={(event) => event.target === event.currentTarget && close()}>
-      <div role="dialog" aria-modal="true" aria-labelledby="task-details-title" className="w-full max-w-lg rounded-2xl border border-zinc-700 bg-zinc-900 shadow-2xl shadow-black/40">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4 backdrop-blur-sm"
+      onMouseDown={(event) => event.target === event.currentTarget && close()}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 24, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 16, scale: 0.97 }}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="task-details-title"
+        className="w-full max-w-lg rounded-2xl border border-zinc-700 bg-zinc-900 shadow-2xl shadow-black/40"
+      >
         <div>
           <header className="flex items-center justify-between gap-4 border-b border-zinc-800 px-5 py-4">
             <h2 id="task-details-title" className="flex min-w-0 flex-1 items-center gap-2 text-lg font-semibold">
@@ -100,7 +115,9 @@ export default function TaskDetailsModal({
                 <Check aria-hidden="true" className="size-3.5" />
               </button>
               {isEditingTitle ? (
-                <input
+                <motion.input
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
                   ref={titleInputRef}
                   required
                   value={title}
@@ -140,16 +157,34 @@ export default function TaskDetailsModal({
               <label htmlFor="edit-task-due-date" className="mb-1.5 block text-sm font-medium text-zinc-300">تاریخ سررسید <span className="font-normal text-zinc-500">(اختیاری)</span></label>
               <input id="edit-task-due-date" type="date" value={dueDate} onChange={(event) => { const nextDueDate = event.target.value; setDueDate(nextDueDate); saveChanges(title, notes, nextDueDate, completed); }} className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-zinc-500" />
             </div>
-            {error && <p role="alert" className="rounded-lg bg-red-950 px-3 py-2 text-sm text-red-300">{error}</p>}
+            <AnimatePresence>
+              {error && (
+                <motion.p initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} role="alert" className="overflow-hidden rounded-lg bg-red-950 px-3 py-2 text-sm text-red-300">
+                  {error}
+                </motion.p>
+              )}
+            </AnimatePresence>
           </div>
 
           <footer className="flex items-center border-t border-zinc-800 px-5 py-4">
-            <button type="button" onClick={handleDelete} disabled={isSaving} className="rounded-lg px-3 py-2 text-sm font-medium text-red-400 hover:bg-red-950 hover:text-red-300 disabled:opacity-40">
-              {isConfirmingDelete ? "برای تأیید دوباره کلیک کنید" : "حذف کار"}
-            </button>
+            <motion.button
+              layout
+              type="button"
+              onClick={handleDelete}
+              disabled={isSaving}
+              animate={isConfirmingDelete ? { x: [0, -3, 3, -2, 2, 0] } : {}}
+              whileTap={{ scale: 0.97 }}
+              className="rounded-lg px-3 py-2 text-sm font-medium text-red-400 hover:bg-red-950 hover:text-red-300 disabled:opacity-40"
+            >
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.span key={isConfirmingDelete ? "confirm" : "delete"} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  {isConfirmingDelete ? "برای تأیید دوباره کلیک کنید" : "حذف کار"}
+                </motion.span>
+              </AnimatePresence>
+            </motion.button>
           </footer>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

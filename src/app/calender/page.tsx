@@ -3,6 +3,7 @@
 import { type FormEvent, useState } from "react";
 import { closestCenter, DndContext, DragOverlay, type DragEndEvent, type DragOverEvent, KeyboardSensor, PointerSensor, useDroppable, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import AddTaskModal from "@/components/add-task-modal";
 import TaskCard, { TaskCardPreview } from "@/components/task-card";
@@ -23,7 +24,7 @@ function addDays(date: Date, days: number) {
   return result;
 }
 
-function DayColumn({ date, tasks, previewTask, onAdd, onToggle, onOpen }: { date: Date; tasks: Task[]; previewTask?: Task; onAdd: (dueDate: string) => void; onToggle: (id: number) => void; onOpen: (task: Task) => void }) {
+function DayColumn({ date, tasks, previewTask, index, onAdd, onToggle, onOpen }: { date: Date; tasks: Task[]; previewTask?: Task; index: number; onAdd: (dueDate: string) => void; onToggle: (id: number) => void; onOpen: (task: Task) => void }) {
   const [showCompleted, setShowCompleted] = useState(false);
   const dateKey = toDateKey(date);
   const { setNodeRef, isOver } = useDroppable({ id: `day:${dateKey}` });
@@ -33,7 +34,14 @@ function DayColumn({ date, tasks, previewTask, onAdd, onToggle, onOpen }: { date
   const progress = tasks.length === 0 ? 0 : Math.round((completedTasks.length / tasks.length) * 100);
 
   return (
-    <section ref={setNodeRef} className={`min-h-80 rounded-2xl border bg-zinc-900 p-3 transition-colors ${isOver ? "border-sky-500 bg-sky-950/20" : "border-zinc-700"}`}>
+    <motion.section
+      ref={setNodeRef}
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0, borderColor: isOver ? "rgb(14 165 233)" : "rgb(63 63 70)" }}
+      exit={{ opacity: 0, y: -12 }}
+      transition={{ delay: index * 0.045 }}
+      className={`min-h-80 rounded-2xl border bg-zinc-900 p-3 transition-colors ${isOver ? "bg-sky-950/20" : ""}`}
+    >
       <header className="mb-3 border-b border-zinc-800 pb-3">
         <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">{new Intl.DateTimeFormat("fa-IR-u-ca-persian", { weekday: "short" }).format(date)}</p>
         <p className="mt-1 text-lg font-semibold text-zinc-200">{new Intl.DateTimeFormat("fa-IR-u-ca-persian", { month: "short", day: "numeric" }).format(date)}</p>
@@ -46,40 +54,48 @@ function DayColumn({ date, tasks, previewTask, onAdd, onToggle, onOpen }: { date
             aria-valuenow={progress}
             className="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-800"
           >
-            <div className="h-full rounded-full bg-green-500 transition-[width] duration-300" style={{ width: `${progress}%` }} />
+            <motion.div initial={{ width: 0 }} animate={{ width: `${progress}%` }} className="h-full rounded-full bg-green-500" />
           </div>
           <span className="w-9 text-left text-xs tabular-nums text-zinc-500">{new Intl.NumberFormat("fa-IR").format(progress)}٪</span>
         </div>
       </header>
-      <button
+      <motion.button
         type="button"
         onClick={() => onAdd(dateKey)}
+        whileHover={{ scale: 1.01 }}
+        whileTap={{ scale: 0.98 }}
         className="mb-3 flex w-full items-center gap-2 rounded-xl border border-dashed border-zinc-600 px-3 py-2 text-right text-xs text-zinc-400 transition-colors hover:border-zinc-500 hover:bg-zinc-800 hover:text-zinc-200"
       >
         <span className="grid size-5 place-items-center rounded-md bg-white text-zinc-950">
           <Plus aria-hidden="true" className="size-4" />
         </span>
         افزودن کار
-      </button>
+      </motion.button>
       <SortableContext items={visibleTasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
         <ul className="space-y-2">
-          {activeTasks.map((task) => <TaskCard key={task.id} task={task} onToggle={onToggle} onOpen={onOpen} keepInPlace showDueDate={false} />)}
-          {activeTasks.length === 0 && !previewTask && (
-            <li><p className="py-8 text-center text-xs text-zinc-600">کارها را اینجا رها کنید</p></li>
-          )}
+          <AnimatePresence initial={false}>
+            {activeTasks.map((task) => <TaskCard key={task.id} task={task} onToggle={onToggle} onOpen={onOpen} keepInPlace showDueDate={false} />)}
+          </AnimatePresence>
+          <AnimatePresence>
+            {activeTasks.length === 0 && !previewTask && (
+              <motion.li initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><p className="py-8 text-center text-xs text-zinc-600">کارها را اینجا رها کنید</p></motion.li>
+            )}
+          </AnimatePresence>
           {previewTask && !previewTask.completed && <li><TaskCardPreview task={previewTask} faded showDueDate={false} /></li>}
           {completedTasks.length > 0 && (
-            <li className="py-1 text-center">
-              <button type="button" onClick={() => setShowCompleted((current) => !current)} className="text-xs font-medium text-zinc-400 transition-colors hover:text-zinc-100">
+            <motion.li initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-1 text-center">
+              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} type="button" onClick={() => setShowCompleted((current) => !current)} className="text-xs font-medium text-zinc-400 transition-colors hover:text-zinc-100">
                 {showCompleted ? "پنهان کردن انجام‌شده‌ها" : `نمایش انجام‌شده‌ها (${new Intl.NumberFormat("fa-IR").format(completedTasks.length)})`}
-              </button>
-            </li>
+              </motion.button>
+            </motion.li>
           )}
-          {showCompleted && completedTasks.map((task) => <TaskCard key={task.id} task={task} onToggle={onToggle} onOpen={onOpen} keepInPlace showDueDate={false} />)}
+          <AnimatePresence initial={false}>
+            {showCompleted && completedTasks.map((task) => <TaskCard key={task.id} task={task} onToggle={onToggle} onOpen={onOpen} keepInPlace showDueDate={false} />)}
+          </AnimatePresence>
           {previewTask && previewTask.completed && <li><TaskCardPreview task={previewTask} faded showDueDate={false} /></li>}
         </ul>
       </SortableContext>
-    </section>
+    </motion.section>
   );
 }
 
@@ -158,18 +174,20 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl">
-      <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mx-auto max-w-7xl">
+      <motion.header initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div><p className="mb-1 text-sm text-zinc-500">برنامه چهارروزه</p><h1 className="text-3xl font-bold tracking-tight">تقویم</h1></div>
         <div className="flex items-center gap-2">
-          <button type="button" onClick={() => setDayOffset(0)} className="rounded-lg border border-zinc-700 px-3 py-2 text-sm font-medium text-zinc-300 hover:bg-zinc-800">امروز</button>
-          <button type="button" onClick={() => setDayOffset((offset) => offset - 4)} aria-label="چهار روز قبل" className="grid size-9 place-items-center rounded-lg border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"><ChevronRight aria-hidden="true" className="size-4" /></button>
-          <button type="button" onClick={() => setDayOffset((offset) => offset + 4)} aria-label="چهار روز بعد" className="grid size-9 place-items-center rounded-lg border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"><ChevronLeft aria-hidden="true" className="size-4" /></button>
+          <motion.button whileHover={{ y: -1 }} whileTap={{ scale: 0.96 }} type="button" onClick={() => setDayOffset(0)} className="rounded-lg border border-zinc-700 px-3 py-2 text-sm font-medium text-zinc-300 hover:bg-zinc-800">امروز</motion.button>
+          <motion.button whileHover={{ x: 2 }} whileTap={{ scale: 0.92 }} type="button" onClick={() => setDayOffset((offset) => offset - 4)} aria-label="چهار روز قبل" className="grid size-9 place-items-center rounded-lg border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"><ChevronRight aria-hidden="true" className="size-4" /></motion.button>
+          <motion.button whileHover={{ x: -2 }} whileTap={{ scale: 0.92 }} type="button" onClick={() => setDayOffset((offset) => offset + 4)} aria-label="چهار روز بعد" className="grid size-9 place-items-center rounded-lg border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"><ChevronLeft aria-hidden="true" className="size-4" /></motion.button>
         </div>
-      </header>
+      </motion.header>
 
-      {error && <p role="alert" className="mb-4 rounded-lg bg-red-950 px-4 py-3 text-sm text-red-300">{error}</p>}
-      {isLoading ? <p className="py-8 text-center text-sm text-zinc-500">در حال بارگذاری کارها…</p> : (
+      <AnimatePresence>
+        {error && <motion.p initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} role="alert" className="mb-4 overflow-hidden rounded-lg bg-red-950 px-4 py-3 text-sm text-red-300">{error}</motion.p>}
+      </AnimatePresence>
+      {isLoading ? <motion.p initial={{ opacity: 0 }} animate={{ opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.4 }} className="py-8 text-center text-sm text-zinc-500">در حال بارگذاری کارها…</motion.p> : (
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -181,21 +199,26 @@ export default function CalendarPage() {
           }}
           onDragEnd={handleDragEnd}
         >
-          <div className="overflow-x-auto pb-2"><div className="grid min-w-[900px] grid-cols-4 gap-3">
-            {days.map((date) => {
+          <div className="overflow-x-auto pb-2">
+            <AnimatePresence mode="wait">
+              <motion.div key={days[0].toISOString()} initial={{ opacity: 0, x: dayOffset >= 0 ? -18 : 18 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: dayOffset >= 0 ? 18 : -18 }} className="grid min-w-[900px] grid-cols-4 gap-3">
+            {days.map((date, index) => {
               const dateKey = toDateKey(date);
               const previewTask = activeTask && dragPreview?.dueDate === dateKey
                 ? { ...activeTask, dueDate: dateKey }
                 : undefined;
               const dayTasks = tasks.filter((task) => task.dueDate === dateKey);
-              return <DayColumn key={dateKey} date={date} tasks={dayTasks} previewTask={previewTask} onAdd={openAddModal} onToggle={toggleTask} onOpen={(task) => { clearError(); setSelectedTaskId(task.id); }} />;
+              return <DayColumn key={dateKey} date={date} tasks={dayTasks} previewTask={previewTask} index={index} onAdd={openAddModal} onToggle={toggleTask} onOpen={(task) => { clearError(); setSelectedTaskId(task.id); }} />;
             })}
-          </div></div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
           <DragOverlay>
             {activeTask && <div className="w-56"><TaskCardPreview task={activeTask} showDueDate={false} /></div>}
           </DragOverlay>
         </DndContext>
       )}
+      <AnimatePresence>
       {isAdding && (
         <AddTaskModal
           title={taskTitle}
@@ -210,7 +233,10 @@ export default function CalendarPage() {
           onSubmit={submitTask}
         />
       )}
-      {selectedTask && <TaskDetailsModal task={selectedTask} error={error} isSaving={isSaving} onClose={() => setSelectedTaskId(null)} onSave={(nextTitle, nextNotes, nextDueDate, completed) => updateTask(selectedTask.id, nextTitle, nextNotes, nextDueDate, completed)} onDelete={() => deleteTask(selectedTask.id)} />}
-    </div>
+      </AnimatePresence>
+      <AnimatePresence>
+        {selectedTask && <TaskDetailsModal task={selectedTask} error={error} isSaving={isSaving} onClose={() => setSelectedTaskId(null)} onSave={(nextTitle, nextNotes, nextDueDate, completed) => updateTask(selectedTask.id, nextTitle, nextNotes, nextDueDate, completed)} onDelete={() => deleteTask(selectedTask.id)} />}
+      </AnimatePresence>
+    </motion.div>
   );
 }

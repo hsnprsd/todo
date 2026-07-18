@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import MotionProvider from "@/components/motion-provider";
 import Sidebar from "@/components/sidebar";
 import "./globals.css";
 
@@ -26,12 +27,14 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: `try{if(localStorage.getItem("todo-sidebar-collapsed")==="true")document.documentElement.classList.add("sidebar-collapsed")}catch{}` }} />
       </head>
       <body className="min-h-full">
-        <div className="flex min-h-screen bg-zinc-900 text-zinc-100">
-          <Sidebar />
-          <main className="min-w-0 flex-1 px-6 py-8 sm:px-10 lg:px-16">
-            {children}
-          </main>
-        </div>
+        <MotionProvider>
+          <div className="flex min-h-screen bg-zinc-900 text-zinc-100">
+            <Sidebar />
+            <main className="min-w-0 flex-1 px-6 py-8 sm:px-10 lg:px-16">
+              {children}
+            </main>
+          </div>
+        </MotionProvider>
       </body>
     </html>
   );

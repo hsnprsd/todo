@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 
 export default function AddTaskModal({
@@ -36,11 +37,22 @@ export default function AddTaskModal({
   }, [isSaving, onClose]);
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4 backdrop-blur-sm"
       onMouseDown={(event) => event.target === event.currentTarget && onClose()}
     >
-      <div role="dialog" aria-modal="true" aria-labelledby="add-task-title" className="w-full max-w-lg rounded-2xl border border-zinc-700 bg-zinc-900 shadow-2xl shadow-black/40">
+      <motion.div
+        initial={{ opacity: 0, y: 24, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 16, scale: 0.97 }}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="add-task-title"
+        className="w-full max-w-lg rounded-2xl border border-zinc-700 bg-zinc-900 shadow-2xl shadow-black/40"
+      >
         <form onSubmit={onSubmit}>
           <header className="flex items-center justify-between border-b border-zinc-800 px-5 py-4">
             <h2 id="add-task-title" className="text-lg font-semibold">افزودن کار</h2>
@@ -62,15 +74,21 @@ export default function AddTaskModal({
               <label htmlFor="task-due-date" className="mb-1.5 block text-sm font-medium text-zinc-300">تاریخ سررسید <span className="font-normal text-zinc-500">(اختیاری)</span></label>
               <input id="task-due-date" type="date" value={dueDate} onChange={(event) => onDueDateChange(event.target.value)} className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-zinc-500" />
             </div>
-            {error && <p role="alert" className="rounded-lg bg-red-950 px-3 py-2 text-sm text-red-300">{error}</p>}
+            <AnimatePresence>
+              {error && (
+                <motion.p initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} role="alert" className="overflow-hidden rounded-lg bg-red-950 px-3 py-2 text-sm text-red-300">
+                  {error}
+                </motion.p>
+              )}
+            </AnimatePresence>
           </div>
 
           <footer className="flex justify-end gap-2 border-t border-zinc-800 px-5 py-4">
             <button type="button" onClick={onClose} disabled={isSaving} className="rounded-lg px-3 py-2 text-sm font-medium text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 disabled:opacity-40">انصراف</button>
-            <button type="submit" disabled={!title.trim() || isSaving} className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-40">{isSaving ? "در حال افزودن…" : "افزودن کار"}</button>
+            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} type="submit" disabled={!title.trim() || isSaving} className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-40">{isSaving ? "در حال افزودن…" : "افزودن کار"}</motion.button>
           </footer>
         </form>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
