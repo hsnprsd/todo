@@ -1,19 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarDays, Clock3, Inbox, Plus } from "lucide-react";
+import { CalendarDays, Inbox } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 const navItems = [
   { label: "صندوق ورودی", href: "/", icon: Inbox },
-  { label: "امروز", href: "/calender", icon: Clock3 },
   { label: "تقویم", href: "/calender", icon: CalendarDays },
-];
-
-const lists = [
-  { label: "شخصی", color: "bg-violet-500" },
-  { label: "کاری", color: "bg-sky-500" },
-  { label: "خرید", color: "bg-amber-500" },
 ];
 
 export default function Sidebar() {
@@ -27,8 +20,8 @@ export default function Sidebar() {
       </Link>
 
       <nav aria-label="ناوبری اصلی" className="space-y-1">
-        {navItems.map((item, index) => {
-          const isActive = pathname === item.href && (item.href !== "/calender" || index === 2);
+        {navItems.map((item) => {
+          const isActive = pathname === item.href;
           const NavIcon = item.icon;
           return (
             <Link
@@ -45,22 +38,6 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className="mt-8 hidden md:block">
-        <div className="mb-2 flex items-center justify-between px-3">
-          <p className="text-xs font-semibold text-zinc-400">فهرست‌ها</p>
-          <button aria-label="افزودن فهرست" className="text-zinc-500 transition-colors hover:text-zinc-100">
-            <Plus aria-hidden="true" className="size-5" />
-          </button>
-        </div>
-        <div className="space-y-1">
-          {lists.map((list) => (
-            <a key={list.label} href="#" className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-700 hover:text-zinc-100">
-              <span className={`size-2 rounded-full ${list.color}`} />
-              {list.label}
-            </a>
-          ))}
-        </div>
-      </div>
     </aside>
   );
 }
