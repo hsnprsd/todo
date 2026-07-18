@@ -119,10 +119,10 @@ export default function Home() {
   }
 
   return (
-    <div className="flex min-h-screen bg-white text-zinc-900">
-      <aside className="flex w-20 shrink-0 flex-col border-r border-zinc-200 bg-zinc-50 px-3 py-5 md:w-64 md:px-4">
+    <div className="flex min-h-screen bg-zinc-900 text-zinc-100">
+      <aside className="flex w-20 shrink-0 flex-col border-r border-zinc-700 bg-zinc-800 px-3 py-5 md:w-64 md:px-4">
         <div className="mb-8 flex items-center justify-center gap-3 px-2 md:justify-start">
-          <div className="grid size-9 place-items-center rounded-xl bg-zinc-900 text-sm font-bold text-white">T</div>
+          <div className="grid size-9 place-items-center rounded-xl bg-white text-sm font-bold text-zinc-950">T</div>
           <span className="hidden text-lg font-semibold tracking-tight md:block">Todo</span>
         </div>
 
@@ -132,7 +132,7 @@ export default function Home() {
               key={item.label}
               href="#"
               className={`flex items-center justify-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors md:justify-start ${
-                index === 0 ? "bg-zinc-200 text-zinc-950" : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950"
+                index === 0 ? "bg-zinc-700 text-white" : "text-zinc-400 hover:bg-zinc-700 hover:text-zinc-100"
               }`}
             >
               <Icon name={item.icon} />
@@ -149,13 +149,13 @@ export default function Home() {
         <div className="mt-8 hidden md:block">
           <div className="mb-2 flex items-center justify-between px-3">
             <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Lists</p>
-            <button aria-label="Add list" className="text-zinc-400 transition-colors hover:text-zinc-900">
+            <button aria-label="Add list" className="text-zinc-500 transition-colors hover:text-zinc-100">
               <Icon name="plus" />
             </button>
           </div>
           <div className="space-y-1">
             {lists.map((list) => (
-              <a key={list.label} href="#" className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-zinc-600 hover:bg-zinc-100">
+              <a key={list.label} href="#" className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-700 hover:text-zinc-100">
                 <span className={`size-2 rounded-full ${list.color}`} />
                 {list.label}
               </a>
@@ -172,13 +172,13 @@ export default function Home() {
               <p className="mb-1 text-sm text-zinc-500">Saturday, July 18</p>
               <h1 className="text-3xl font-bold tracking-tight">Inbox</h1>
             </div>
-            <button aria-label="Search" className="grid size-10 place-items-center rounded-full border border-zinc-200 text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900">
+            <button aria-label="Search" className="grid size-10 place-items-center rounded-full border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100">
               <Icon name="search" />
             </button>
           </header>
 
           {isAdding ? (
-            <form onSubmit={addTask} className="mb-6 rounded-xl border border-zinc-300 bg-white p-3 shadow-sm">
+            <form onSubmit={addTask} className="mb-6 rounded-xl border border-zinc-600 bg-zinc-800 p-3 shadow-sm shadow-black/20">
               <label htmlFor="new-task" className="sr-only">Task name</label>
               <input
                 id="new-task"
@@ -192,23 +192,23 @@ export default function Home() {
                   }
                 }}
                 placeholder="What needs to be done?"
-                className="w-full px-1 py-1 text-sm outline-none placeholder:text-zinc-400"
+                className="w-full bg-transparent px-1 py-1 text-sm text-zinc-100 outline-none placeholder:text-zinc-500"
               />
-              <div className="mt-3 flex items-center justify-end gap-2 border-t border-zinc-100 pt-3">
+              <div className="mt-3 flex items-center justify-end gap-2 border-t border-zinc-800 pt-3">
                 <button
                   type="button"
                   onClick={() => {
                     setTaskTitle("");
                     setIsAdding(false);
                   }}
-                  className="rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100"
+                  className="rounded-lg px-3 py-2 text-sm font-medium text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={!taskTitle.trim() || isSaving}
-                  className="rounded-lg bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="rounded-lg bg-white px-3 py-2 text-sm font-medium text-zinc-950 hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {isSaving ? "Adding…" : "Add task"}
                 </button>
@@ -218,15 +218,15 @@ export default function Home() {
             <button
               type="button"
               onClick={() => setIsAdding(true)}
-              className="mb-6 flex w-full items-center gap-3 rounded-xl border border-dashed border-zinc-300 px-4 py-3 text-left text-sm text-zinc-500 transition-colors hover:border-zinc-400 hover:bg-zinc-50 hover:text-zinc-800"
+              className="mb-6 flex w-full items-center gap-3 rounded-xl border border-dashed border-zinc-600 px-4 py-3 text-left text-sm text-zinc-400 transition-colors hover:border-zinc-500 hover:bg-zinc-800 hover:text-zinc-200"
             >
-              <span className="grid size-6 place-items-center rounded-md bg-zinc-900 text-white"><Icon name="plus" /></span>
+              <span className="grid size-6 place-items-center rounded-md bg-white text-zinc-950"><Icon name="plus" /></span>
               Add a task
             </button>
           )}
 
           {error && (
-            <p role="alert" className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+            <p role="alert" className="mb-4 rounded-lg bg-red-950 px-4 py-3 text-sm text-red-300">
               {error}
             </p>
           )}
@@ -234,8 +234,8 @@ export default function Home() {
           {isLoading ? (
             <p className="py-8 text-center text-sm text-zinc-500">Loading tasks…</p>
           ) : tasks.length === 0 ? (
-            <section className="rounded-2xl border border-zinc-200 bg-white p-8 text-center shadow-sm shadow-zinc-100">
-              <div className="mx-auto mb-4 grid size-12 place-items-center rounded-full bg-zinc-100 text-zinc-500">
+            <section className="rounded-2xl border border-zinc-700 bg-zinc-800 p-8 text-center shadow-sm shadow-black/20">
+              <div className="mx-auto mb-4 grid size-12 place-items-center rounded-full bg-zinc-700 text-zinc-300">
                 <Icon name="tray" />
               </div>
               <h2 className="font-semibold">Your inbox is clear</h2>
@@ -244,7 +244,7 @@ export default function Home() {
               </p>
             </section>
           ) : (
-            <ul className="divide-y divide-zinc-100 rounded-2xl border border-zinc-200 bg-white px-4 shadow-sm shadow-zinc-100">
+            <ul className="divide-y divide-zinc-700 rounded-2xl border border-zinc-700 bg-zinc-800 px-4 shadow-sm shadow-black/20">
               {tasks.map((task) => (
                 <li key={task.id} className="flex items-center gap-3 py-4">
                   <input
@@ -252,9 +252,9 @@ export default function Home() {
                     checked={task.completed}
                     onChange={() => toggleTask(task.id)}
                     aria-label={`Mark ${task.title} as ${task.completed ? "incomplete" : "complete"}`}
-                    className="size-4 accent-zinc-900"
+                    className="size-4 accent-white"
                   />
-                  <span className={`text-sm ${task.completed ? "text-zinc-400 line-through" : "text-zinc-800"}`}>
+                  <span className={`text-sm ${task.completed ? "text-zinc-500 line-through" : "text-zinc-200"}`}>
                     {task.title}
                   </span>
                 </li>
