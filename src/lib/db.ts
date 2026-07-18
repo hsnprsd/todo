@@ -20,7 +20,20 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS tasks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,
+    notes TEXT,
+    due_date TEXT,
     completed INTEGER NOT NULL DEFAULT 0 CHECK (completed IN (0, 1)),
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   )
 `);
+
+const taskColumns = db.prepare("PRAGMA table_info(tasks)").all() as Array<{ name: string }>;
+const taskColumnNames = new Set(taskColumns.map((column) => column.name));
+
+if (!taskColumnNames.has("notes")) {
+  db.exec("ALTER TABLE tasks ADD COLUMN notes TEXT");
+}
+
+if (!taskColumnNames.has("due_date")) {
+  db.exec("ALTER TABLE tasks ADD COLUMN due_date TEXT");
+}

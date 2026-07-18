@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { Check } from "lucide-react";
+import { CalendarDays, Check, X } from "lucide-react";
 
 const navItems = [
   { label: "Inbox", icon: "tray" },
@@ -21,7 +21,6 @@ function Icon({ name }: { name: string }) {
     calendar: <path d="M6 3v3m12-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z" />,
     clock: <path d="M12 7v5l3 2m6-2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />,
     plus: <path d="M12 5v14M5 12h14" />,
-    close: <path d="m6 6 12 12M18 6 6 18" />,
   };
 
   return (
@@ -34,13 +33,25 @@ function Icon({ name }: { name: string }) {
 type Task = {
   id: number;
   title: string;
+  notes: string | null;
+  dueDate: string | null;
   completed: boolean;
 };
+
+function formatDueDate(dueDate: string) {
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date(`${dueDate}T00:00:00`));
+}
 
 export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [taskTitle, setTaskTitle] = useState("");
+  const [taskNotes, setTaskNotes] = useState("");
+  const [taskDueDate, setTaskDueDate] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [showCompleted, setShowCompleted] = useState(false);
@@ -75,13 +86,19 @@ export default function Home() {
       const response = await fetch("/api/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title }),
+        body: JSON.stringify({
+          title,
+          notes: taskNotes,
+          dueDate: taskDueDate,
+        }),
       });
       if (!response.ok) throw new Error("Could not add task.");
 
       const task = (await response.json()) as Task;
       setTasks((currentTasks) => [...currentTasks, task]);
       setTaskTitle("");
+      setTaskNotes("");
+      setTaskDueDate("");
       setIsAdding(false);
     } catch {
       setError("Could not add the task. Please try again.");
@@ -117,6 +134,14 @@ export default function Home() {
       );
       setError("Could not update the task. Please try again.");
     }
+  }
+
+  function closeTaskModal() {
+    if (isSaving) return;
+    setTaskTitle("");
+    setTaskNotes("");
+    setTaskDueDate("");
+    setIsAdding(false);
   }
 
   const activeTasks = tasks.filter((task) => !task.completed);
@@ -178,53 +203,17 @@ export default function Home() {
             </div>
           </header>
 
-          {isAdding ? (
-            <form onSubmit={addTask} className="mb-6 rounded-xl border border-zinc-600 bg-zinc-800 p-3 shadow-sm shadow-black/20">
-              <label htmlFor="new-task" className="sr-only">Task name</label>
-              <input
-                id="new-task"
-                autoFocus
-                value={taskTitle}
-                onChange={(event) => setTaskTitle(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Escape") {
-                    setTaskTitle("");
-                    setIsAdding(false);
-                  }
-                }}
-                placeholder="What needs to be done?"
-                className="w-full bg-transparent px-1 py-1 text-sm text-zinc-100 outline-none placeholder:text-zinc-500"
-              />
-              <div className="mt-3 flex items-center justify-end gap-2 border-t border-zinc-800 pt-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTaskTitle("");
-                    setIsAdding(false);
-                  }}
-                  className="rounded-lg px-3 py-2 text-sm font-medium text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={!taskTitle.trim() || isSaving}
-                  className="rounded-lg bg-white px-3 py-2 text-sm font-medium text-zinc-950 hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  {isSaving ? "Adding…" : "Add task"}
-                </button>
-              </div>
-            </form>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setIsAdding(true)}
-              className="mb-6 flex w-full items-center gap-3 rounded-xl border border-dashed border-zinc-600 px-4 py-3 text-left text-sm text-zinc-400 transition-colors hover:border-zinc-500 hover:bg-zinc-800 hover:text-zinc-200"
-            >
-              <span className="grid size-6 place-items-center rounded-md bg-white text-zinc-950"><Icon name="plus" /></span>
-              Add a task
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => {
+              setError("");
+              setIsAdding(true);
+            }}
+            className="mb-6 flex w-full items-center gap-3 rounded-xl border border-dashed border-zinc-600 px-4 py-3 text-left text-sm text-zinc-400 transition-colors hover:border-zinc-500 hover:bg-zinc-800 hover:text-zinc-200"
+          >
+            <span className="grid size-6 place-items-center rounded-md bg-white text-zinc-950"><Icon name="plus" /></span>
+            Add a task
+          </button>
 
           {error && (
             <p role="alert" className="mb-4 rounded-lg bg-red-950 px-4 py-3 text-sm text-red-300">
@@ -264,7 +253,18 @@ export default function Home() {
                   >
                     <Check aria-hidden="true" className="size-3.5" />
                   </button>
-                  <span className="text-sm text-zinc-200">{task.title}</span>
+                  <div className="min-w-0 flex-1">
+                    <span className="block truncate text-sm text-zinc-200">{task.title}</span>
+                    {task.notes && (
+                      <p className="mt-0.5 truncate text-xs text-zinc-500">{task.notes}</p>
+                    )}
+                    {task.dueDate && (
+                      <p className="mt-1 flex items-center gap-1 text-xs text-zinc-400">
+                        <CalendarDays aria-hidden="true" className="size-3" />
+                        {formatDueDate(task.dueDate)}
+                      </p>
+                    )}
+                  </div>
                 </li>
               ))}
 
@@ -294,13 +294,131 @@ export default function Home() {
                   >
                     <Check aria-hidden="true" className="size-3.5" />
                   </button>
-                  <span className="text-sm text-zinc-500 line-through">{task.title}</span>
+                  <div className="min-w-0 flex-1">
+                    <span className="block truncate text-sm text-zinc-500 line-through">{task.title}</span>
+                    {task.notes && (
+                      <p className="mt-0.5 truncate text-xs text-zinc-600">{task.notes}</p>
+                    )}
+                    {task.dueDate && (
+                      <p className="mt-1 flex items-center gap-1 text-xs text-zinc-500">
+                        <CalendarDays aria-hidden="true" className="size-3" />
+                        {formatDueDate(task.dueDate)}
+                      </p>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>
           )}
         </div>
       </main>
+
+      {isAdding && (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4 backdrop-blur-sm"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) closeTaskModal();
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-task-title"
+            className="w-full max-w-lg rounded-2xl border border-zinc-700 bg-zinc-900 shadow-2xl shadow-black/40"
+          >
+            <form
+              onSubmit={addTask}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") {
+                  event.preventDefault();
+                  closeTaskModal();
+                }
+              }}
+            >
+              <header className="flex items-center justify-between border-b border-zinc-800 px-5 py-4">
+                <h2 id="add-task-title" className="text-lg font-semibold">Add a task</h2>
+                <button
+                  type="button"
+                  onClick={closeTaskModal}
+                  disabled={isSaving}
+                  aria-label="Close"
+                  className="grid size-8 place-items-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100 disabled:opacity-40"
+                >
+                  <X aria-hidden="true" className="size-4" />
+                </button>
+              </header>
+
+              <div className="space-y-4 px-5 py-5">
+                <div>
+                  <label htmlFor="task-title" className="mb-1.5 block text-sm font-medium text-zinc-300">
+                    Title
+                  </label>
+                  <input
+                    id="task-title"
+                    autoFocus
+                    required
+                    value={taskTitle}
+                    onChange={(event) => setTaskTitle(event.target.value)}
+                    placeholder="What needs to be done?"
+                    className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors placeholder:text-zinc-500 focus:border-zinc-500"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="task-notes" className="mb-1.5 block text-sm font-medium text-zinc-300">
+                    Notes <span className="font-normal text-zinc-500">(optional)</span>
+                  </label>
+                  <textarea
+                    id="task-notes"
+                    rows={3}
+                    value={taskNotes}
+                    onChange={(event) => setTaskNotes(event.target.value)}
+                    placeholder="Add any details"
+                    className="w-full resize-none rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors placeholder:text-zinc-500 focus:border-zinc-500"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="task-due-date" className="mb-1.5 block text-sm font-medium text-zinc-300">
+                    Due date <span className="font-normal text-zinc-500">(optional)</span>
+                  </label>
+                  <input
+                    id="task-due-date"
+                    type="date"
+                    value={taskDueDate}
+                    onChange={(event) => setTaskDueDate(event.target.value)}
+                    className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-zinc-500"
+                  />
+                </div>
+
+                {error && (
+                  <p role="alert" className="rounded-lg bg-red-950 px-3 py-2 text-sm text-red-300">
+                    {error}
+                  </p>
+                )}
+              </div>
+
+              <footer className="flex justify-end gap-2 border-t border-zinc-800 px-5 py-4">
+                <button
+                  type="button"
+                  onClick={closeTaskModal}
+                  disabled={isSaving}
+                  className="rounded-lg px-3 py-2 text-sm font-medium text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100 disabled:opacity-40"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!taskTitle.trim() || isSaving}
+                  className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-zinc-950 transition-colors hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {isSaving ? "Adding…" : "Add task"}
+                </button>
+              </footer>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
