@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { Check } from "lucide-react";
 
 const navItems = [
   { label: "Inbox", icon: "tray" },
@@ -234,7 +235,7 @@ export default function Home() {
           {isLoading ? (
             <p className="py-8 text-center text-sm text-zinc-500">Loading tasks…</p>
           ) : (
-            <ul className="space-y-3">
+            <ul className="space-y-2">
               {activeTasks.length === 0 && (
                 <li>
                   <section className="rounded-2xl border border-zinc-700 bg-zinc-800 p-8 text-center shadow-sm shadow-black/20">
@@ -252,15 +253,17 @@ export default function Home() {
               {activeTasks.map((task) => (
                 <li
                   key={task.id}
-                  className="flex items-center gap-3 rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-4 shadow-sm shadow-black/20"
+                  className="flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800 px-2 py-2 shadow-sm shadow-black/20"
                 >
-                  <input
-                    type="checkbox"
-                    checked={task.completed}
-                    onChange={() => toggleTask(task.id)}
+                  <button
+                    type="button"
+                    onClick={() => toggleTask(task.id)}
                     aria-label={`Mark ${task.title} as complete`}
-                    className="size-4 accent-white"
-                  />
+                    title="Mark as complete"
+                    className="grid size-6 shrink-0 place-items-center rounded-md text-zinc-400 transition-colors hover:bg-green-500/15 hover:text-green-400"
+                  >
+                    <Check aria-hidden="true" className="size-3.5" />
+                  </button>
                   <span className="text-sm text-zinc-200">{task.title}</span>
                 </li>
               ))}
@@ -280,15 +283,17 @@ export default function Home() {
               {showCompleted && completedTasks.map((task) => (
                 <li
                   key={task.id}
-                  className="flex items-center gap-3 rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-4 shadow-sm shadow-black/20"
+                  className="flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800 px-2 py-2 shadow-sm shadow-black/20"
                 >
-                  <input
-                    type="checkbox"
-                    checked={task.completed}
-                    onChange={() => toggleTask(task.id)}
+                  <button
+                    type="button"
+                    onClick={() => toggleTask(task.id)}
                     aria-label={`Mark ${task.title} as incomplete`}
-                    className="size-4 accent-white"
-                  />
+                    title="Mark as incomplete"
+                    className="grid size-6 shrink-0 place-items-center rounded-md bg-zinc-700 text-zinc-100 transition-colors hover:bg-green-500/20 hover:text-green-400"
+                  >
+                    <Check aria-hidden="true" className="size-3.5" />
+                  </button>
                   <span className="text-sm text-zinc-500 line-through">{task.title}</span>
                 </li>
               ))}
