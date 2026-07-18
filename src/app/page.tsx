@@ -1,5 +1,9 @@
+"use client";
+
+import { FormEvent, useState } from "react";
+
 const navItems = [
-  { label: "Inbox", icon: "tray", count: 3 },
+  { label: "Inbox", icon: "tray" },
   { label: "Today", icon: "calendar", count: 2 },
   { label: "Upcoming", icon: "clock" },
 ];
@@ -17,6 +21,7 @@ function Icon({ name }: { name: string }) {
     clock: <path d="M12 7v5l3 2m6-2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />,
     plus: <path d="M12 5v14M5 12h14" />,
     search: <path d="m20 20-4.2-4.2m1.2-5.3a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" />,
+    close: <path d="m6 6 12 12M18 6 6 18" />,
   };
 
   return (
@@ -26,7 +31,39 @@ function Icon({ name }: { name: string }) {
   );
 }
 
+type Task = {
+  id: number;
+  title: string;
+  completed: boolean;
+};
+
 export default function Home() {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [isAdding, setIsAdding] = useState(false);
+  const [taskTitle, setTaskTitle] = useState("");
+
+  function addTask(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const title = taskTitle.trim();
+
+    if (!title) return;
+
+    setTasks((currentTasks) => [
+      ...currentTasks,
+      { id: Date.now(), title, completed: false },
+    ]);
+    setTaskTitle("");
+    setIsAdding(false);
+  }
+
+  function toggleTask(id: number) {
+    setTasks((currentTasks) =>
+      currentTasks.map((task) =>
+        task.id === id ? { ...task, completed: !task.completed } : task,
+      ),
+    );
+  }
+
   return (
     <div className="flex min-h-screen bg-white text-zinc-900">
       <aside className="flex w-20 shrink-0 flex-col border-r border-zinc-200 bg-zinc-50 px-3 py-5 md:w-64 md:px-4">
@@ -46,7 +83,11 @@ export default function Home() {
             >
               <Icon name={item.icon} />
               <span className="hidden flex-1 md:block">{item.label}</span>
-              {item.count && <span className="hidden text-xs text-zinc-500 md:block">{item.count}</span>}
+              {(item.label === "Inbox" ? tasks.length : (item.count ?? 0)) > 0 && (
+                <span className="hidden text-xs text-zinc-500 md:block">
+                  {item.label === "Inbox" ? tasks.length : item.count}
+                </span>
+              )}
             </a>
           ))}
         </nav>
@@ -82,20 +123,82 @@ export default function Home() {
             </button>
           </header>
 
-          <button className="mb-6 flex w-full items-center gap-3 rounded-xl border border-dashed border-zinc-300 px-4 py-3 text-left text-sm text-zinc-500 transition-colors hover:border-zinc-400 hover:bg-zinc-50 hover:text-zinc-800">
-            <span className="grid size-6 place-items-center rounded-md bg-zinc-900 text-white"><Icon name="plus" /></span>
-            Add a task
-          </button>
+          {isAdding ? (
+            <form onSubmit={addTask} className="mb-6 rounded-xl border border-zinc-300 bg-white p-3 shadow-sm">
+              <label htmlFor="new-task" className="sr-only">Task name</label>
+              <input
+                id="new-task"
+                autoFocus
+                value={taskTitle}
+                onChange={(event) => setTaskTitle(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") {
+                    setTaskTitle("");
+                    setIsAdding(false);
+                  }
+                }}
+                placeholder="What needs to be done?"
+                className="w-full px-1 py-1 text-sm outline-none placeholder:text-zinc-400"
+              />
+              <div className="mt-3 flex items-center justify-end gap-2 border-t border-zinc-100 pt-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTaskTitle("");
+                    setIsAdding(false);
+                  }}
+                  className="rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!taskTitle.trim()}
+                  className="rounded-lg bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Add task
+                </button>
+              </div>
+            </form>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsAdding(true)}
+              className="mb-6 flex w-full items-center gap-3 rounded-xl border border-dashed border-zinc-300 px-4 py-3 text-left text-sm text-zinc-500 transition-colors hover:border-zinc-400 hover:bg-zinc-50 hover:text-zinc-800"
+            >
+              <span className="grid size-6 place-items-center rounded-md bg-zinc-900 text-white"><Icon name="plus" /></span>
+              Add a task
+            </button>
+          )}
 
-          <section className="rounded-2xl border border-zinc-200 bg-white p-8 text-center shadow-sm shadow-zinc-100">
-            <div className="mx-auto mb-4 grid size-12 place-items-center rounded-full bg-zinc-100 text-zinc-500">
-              <Icon name="tray" />
-            </div>
-            <h2 className="font-semibold">Your inbox is clear</h2>
-            <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-zinc-500">
-              Capture tasks as they come to you. You can organize them into lists later.
-            </p>
-          </section>
+          {tasks.length === 0 ? (
+            <section className="rounded-2xl border border-zinc-200 bg-white p-8 text-center shadow-sm shadow-zinc-100">
+              <div className="mx-auto mb-4 grid size-12 place-items-center rounded-full bg-zinc-100 text-zinc-500">
+                <Icon name="tray" />
+              </div>
+              <h2 className="font-semibold">Your inbox is clear</h2>
+              <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-zinc-500">
+                Capture tasks as they come to you. You can organize them into lists later.
+              </p>
+            </section>
+          ) : (
+            <ul className="divide-y divide-zinc-100 rounded-2xl border border-zinc-200 bg-white px-4 shadow-sm shadow-zinc-100">
+              {tasks.map((task) => (
+                <li key={task.id} className="flex items-center gap-3 py-4">
+                  <input
+                    type="checkbox"
+                    checked={task.completed}
+                    onChange={() => toggleTask(task.id)}
+                    aria-label={`Mark ${task.title} as ${task.completed ? "incomplete" : "complete"}`}
+                    className="size-4 accent-zinc-900"
+                  />
+                  <span className={`text-sm ${task.completed ? "text-zinc-400 line-through" : "text-zinc-800"}`}>
+                    {task.title}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </main>
     </div>
