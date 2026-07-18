@@ -18,11 +18,13 @@ export default function TaskCard({
   onToggle,
   onOpen,
   keepInPlace = false,
+  showDueDate = true,
 }: {
   task: Task;
   onToggle: (id: number) => void;
   onOpen: (task: Task) => void;
   keepInPlace?: boolean;
+  showDueDate?: boolean;
 }) {
   const {
     attributes,
@@ -61,7 +63,7 @@ export default function TaskCard({
         <span className={`block truncate text-sm ${task.completed ? "text-zinc-500 line-through" : "text-zinc-200"}`}>
           {task.title}
         </span>
-        {task.dueDate && (
+        {showDueDate && task.dueDate && (
           <span className={`mt-1 flex items-center gap-1 text-xs ${task.completed ? "text-zinc-500" : "text-zinc-400"}`}>
             <CalendarDays aria-hidden="true" className="size-3" />
             {formatDueDate(task.dueDate)}
@@ -72,7 +74,7 @@ export default function TaskCard({
   );
 }
 
-export function TaskCardPreview({ task, faded = false }: { task: Task; faded?: boolean }) {
+export function TaskCardPreview({ task, faded = false, showDueDate = true }: { task: Task; faded?: boolean; showDueDate?: boolean }) {
   return (
     <div className={`flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800 px-2 py-2 shadow-lg shadow-black/20 ${faded ? "opacity-50" : ""}`}>
       <span className={`grid size-6 shrink-0 place-items-center rounded-md ${task.completed ? "bg-zinc-700 text-zinc-100" : "text-zinc-400"}`}>
@@ -82,7 +84,7 @@ export function TaskCardPreview({ task, faded = false }: { task: Task; faded?: b
         <span className={`block truncate text-sm ${task.completed ? "text-zinc-500 line-through" : "text-zinc-200"}`}>
           {task.title}
         </span>
-        {task.dueDate && (
+        {showDueDate && task.dueDate && (
           <span className={`mt-1 flex items-center gap-1 text-xs ${task.completed ? "text-zinc-500" : "text-zinc-400"}`}>
             <CalendarDays aria-hidden="true" className="size-3" />
             {formatDueDate(task.dueDate)}

@@ -49,11 +49,11 @@ function DayColumn({ date, tasks, previewTask, onAdd, onToggle, onOpen }: { date
       </button>
       <SortableContext items={visibleTasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
         <ul className="space-y-2">
-          {activeTasks.map((task) => <TaskCard key={task.id} task={task} onToggle={onToggle} onOpen={onOpen} keepInPlace />)}
+          {activeTasks.map((task) => <TaskCard key={task.id} task={task} onToggle={onToggle} onOpen={onOpen} keepInPlace showDueDate={false} />)}
           {activeTasks.length === 0 && !previewTask && (
             <li><p className="py-8 text-center text-xs text-zinc-600">Drop tasks here</p></li>
           )}
-          {previewTask && !previewTask.completed && <li><TaskCardPreview task={previewTask} faded /></li>}
+          {previewTask && !previewTask.completed && <li><TaskCardPreview task={previewTask} faded showDueDate={false} /></li>}
           {completedTasks.length > 0 && (
             <li className="py-1 text-center">
               <button type="button" onClick={() => setShowCompleted((current) => !current)} className="text-xs font-medium text-zinc-400 transition-colors hover:text-zinc-100">
@@ -61,8 +61,8 @@ function DayColumn({ date, tasks, previewTask, onAdd, onToggle, onOpen }: { date
               </button>
             </li>
           )}
-          {showCompleted && completedTasks.map((task) => <TaskCard key={task.id} task={task} onToggle={onToggle} onOpen={onOpen} keepInPlace />)}
-          {previewTask && previewTask.completed && <li><TaskCardPreview task={previewTask} faded /></li>}
+          {showCompleted && completedTasks.map((task) => <TaskCard key={task.id} task={task} onToggle={onToggle} onOpen={onOpen} keepInPlace showDueDate={false} />)}
+          {previewTask && previewTask.completed && <li><TaskCardPreview task={previewTask} faded showDueDate={false} /></li>}
         </ul>
       </SortableContext>
     </section>
@@ -178,7 +178,7 @@ export default function CalendarPage() {
             })}
           </div></div>
           <DragOverlay>
-            {activeTask && <div className="w-56"><TaskCardPreview task={activeTask} /></div>}
+            {activeTask && <div className="w-56"><TaskCardPreview task={activeTask} showDueDate={false} /></div>}
           </DragOverlay>
         </DndContext>
       )}
