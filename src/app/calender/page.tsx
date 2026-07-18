@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { type FormEvent, useState } from "react";
 import { closestCenter, DndContext, DragOverlay, type DragEndEvent, type DragOverEvent, KeyboardSensor, PointerSensor, useDroppable, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import AddTaskModal from "@/components/add-task-modal";
 import TaskCard, { TaskCardPreview } from "@/components/task-card";
 import TaskDetailsModal from "@/components/task-details-modal";
 import { useTasks } from "@/hooks/use-tasks";
@@ -22,7 +23,7 @@ function addDays(date: Date, days: number) {
   return result;
 }
 
-function DayColumn({ date, tasks, previewTask, onToggle, onOpen }: { date: Date; tasks: Task[]; previewTask?: Task; onToggle: (id: number) => void; onOpen: (task: Task) => void }) {
+function DayColumn({ date, tasks, previewTask, onAdd, onToggle, onOpen }: { date: Date; tasks: Task[]; previewTask?: Task; onAdd: (dueDate: string) => void; onToggle: (id: number) => void; onOpen: (task: Task) => void }) {
   const [showCompleted, setShowCompleted] = useState(false);
   const dateKey = toDateKey(date);
   const { setNodeRef, isOver } = useDroppable({ id: `day:${dateKey}` });
@@ -36,6 +37,16 @@ function DayColumn({ date, tasks, previewTask, onToggle, onOpen }: { date: Date;
         <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">{new Intl.DateTimeFormat("en", { weekday: "short" }).format(date)}</p>
         <p className="mt-1 text-lg font-semibold text-zinc-200">{new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(date)}</p>
       </header>
+      <button
+        type="button"
+        onClick={() => onAdd(dateKey)}
+        className="mb-3 flex w-full items-center gap-2 rounded-xl border border-dashed border-zinc-600 px-3 py-2 text-left text-xs text-zinc-400 transition-colors hover:border-zinc-500 hover:bg-zinc-800 hover:text-zinc-200"
+      >
+        <span className="grid size-5 place-items-center rounded-md bg-white text-zinc-950">
+          <Plus aria-hidden="true" className="size-4" />
+        </span>
+        Add a task
+      </button>
       <SortableContext items={visibleTasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
         <ul className="space-y-2">
           {activeTasks.map((task) => <TaskCard key={task.id} task={task} onToggle={onToggle} onOpen={onOpen} keepInPlace />)}
@@ -59,8 +70,12 @@ function DayColumn({ date, tasks, previewTask, onToggle, onOpen }: { date: Date;
 }
 
 export default function CalendarPage() {
-  const { tasks, isLoading, error, toggleTask, moveTaskToDate } = useTasks();
+  const { tasks, isLoading, isSaving, error, clearError, addTask, toggleTask, moveTaskToDate } = useTasks();
   const [dayOffset, setDayOffset] = useState(0);
+  const [isAdding, setIsAdding] = useState(false);
+  const [taskTitle, setTaskTitle] = useState("");
+  const [taskNotes, setTaskNotes] = useState("");
+  const [taskDueDate, setTaskDueDate] = useState("");
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const [activeTaskId, setActiveTaskId] = useState<number | null>(null);
   const [dragPreview, setDragPreview] = useState<{ taskId: number; dueDate: string } | null>(null);
@@ -73,6 +88,25 @@ export default function CalendarPage() {
   const days = Array.from({ length: 4 }, (_, index) => addDays(today, dayOffset + index));
   const selectedTask = tasks.find((task) => task.id === selectedTaskId);
   const activeTask = tasks.find((task) => task.id === activeTaskId);
+
+  function openAddModal(dueDate: string) {
+    clearError();
+    setTaskDueDate(dueDate);
+    setIsAdding(true);
+  }
+
+  function closeAddModal() {
+    if (isSaving) return;
+    setTaskTitle("");
+    setTaskNotes("");
+    setTaskDueDate("");
+    setIsAdding(false);
+  }
+
+  async function submitTask(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (await addTask(taskTitle.trim(), taskNotes, taskDueDate)) closeAddModal();
+  }
 
   function getTargetDate(overId: string | number) {
     return typeof overId === "string" && overId.startsWith("day:")
@@ -135,13 +169,27 @@ export default function CalendarPage() {
                 ? { ...activeTask, dueDate: dateKey }
                 : undefined;
               const dayTasks = tasks.filter((task) => task.dueDate === dateKey);
-              return <DayColumn key={dateKey} date={date} tasks={dayTasks} previewTask={previewTask} onToggle={toggleTask} onOpen={(task) => setSelectedTaskId(task.id)} />;
+              return <DayColumn key={dateKey} date={date} tasks={dayTasks} previewTask={previewTask} onAdd={openAddModal} onToggle={toggleTask} onOpen={(task) => setSelectedTaskId(task.id)} />;
             })}
           </div></div>
           <DragOverlay>
             {activeTask && <div className="w-56"><TaskCardPreview task={activeTask} /></div>}
           </DragOverlay>
         </DndContext>
+      )}
+      {isAdding && (
+        <AddTaskModal
+          title={taskTitle}
+          notes={taskNotes}
+          dueDate={taskDueDate}
+          error={error}
+          isSaving={isSaving}
+          onTitleChange={setTaskTitle}
+          onNotesChange={setTaskNotes}
+          onDueDateChange={setTaskDueDate}
+          onClose={closeAddModal}
+          onSubmit={submitTask}
+        />
       )}
       {selectedTask && <TaskDetailsModal task={selectedTask} onClose={() => setSelectedTaskId(null)} />}
     </div>
