@@ -70,7 +70,7 @@ function DayColumn({ date, tasks, previewTask, onAdd, onToggle, onOpen }: { date
 }
 
 export default function CalendarPage() {
-  const { tasks, isLoading, isSaving, error, clearError, addTask, updateTask, toggleTask, moveTaskToDate } = useTasks();
+  const { tasks, isLoading, isSaving, error, clearError, addTask, updateTask, toggleTask, moveTaskToDate, reorderTasks } = useTasks();
   const [dayOffset, setDayOffset] = useState(0);
   const [isAdding, setIsAdding] = useState(false);
   const [taskTitle, setTaskTitle] = useState("");
@@ -135,6 +135,11 @@ export default function CalendarPage() {
     setActiveTaskId(null);
     if (task && targetDate && targetDate !== task.dueDate) {
       void moveTaskToDate(task.id, targetDate);
+    } else if (task && over && active.id !== over.id) {
+      const targetTask = tasks.find((item) => item.id === over.id);
+      if (targetTask?.dueDate === task.dueDate) {
+        void reorderTasks(task.id, targetTask.id);
+      }
     }
   }
 
