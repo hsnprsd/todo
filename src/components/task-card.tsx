@@ -6,7 +6,7 @@ import { CalendarDays, Check } from "lucide-react";
 import type { Task } from "@/types/task";
 
 export function formatDueDate(dueDate: string) {
-  return new Intl.DateTimeFormat("en", {
+  return new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -51,15 +51,15 @@ export default function TaskCard({
       <button
         type="button"
         onClick={() => onToggle(task.id)}
-        aria-label={`Mark ${task.title} as ${task.completed ? "incomplete" : "complete"}`}
-        title={`Mark as ${task.completed ? "incomplete" : "complete"}`}
+        aria-label={task.completed ? `فعال کردن ${task.title}` : `انجام‌شده علامت زدن ${task.title}`}
+        title={task.completed ? "فعال کردن" : "انجام‌شده علامت زدن"}
         className={`grid size-6 shrink-0 place-items-center rounded-md transition-colors hover:bg-green-500/20 hover:text-green-400 ${
           task.completed ? "bg-zinc-700 text-zinc-100" : "text-zinc-400"
         }`}
       >
         <Check aria-hidden="true" className="size-3.5" />
       </button>
-      <button type="button" onClick={() => onOpen(task)} className="min-w-0 flex-1 text-left">
+      <button type="button" onClick={() => onOpen(task)} className="min-w-0 flex-1 text-right">
         <span className={`block truncate text-sm ${task.completed ? "text-zinc-500 line-through" : "text-zinc-200"}`}>
           {task.title}
         </span>
@@ -80,7 +80,7 @@ export function TaskCardPreview({ task, faded = false, showDueDate = true }: { t
       <span className={`grid size-6 shrink-0 place-items-center rounded-md ${task.completed ? "bg-zinc-700 text-zinc-100" : "text-zinc-400"}`}>
         <Check aria-hidden="true" className="size-3.5" />
       </span>
-      <div className="min-w-0 flex-1 text-left">
+      <div className="min-w-0 flex-1 text-right">
         <span className={`block truncate text-sm ${task.completed ? "text-zinc-500 line-through" : "text-zinc-200"}`}>
           {task.title}
         </span>

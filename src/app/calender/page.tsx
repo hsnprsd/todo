@@ -34,30 +34,30 @@ function DayColumn({ date, tasks, previewTask, onAdd, onToggle, onOpen }: { date
   return (
     <section ref={setNodeRef} className={`min-h-80 rounded-2xl border bg-zinc-900 p-3 transition-colors ${isOver ? "border-sky-500 bg-sky-950/20" : "border-zinc-700"}`}>
       <header className="mb-3 border-b border-zinc-800 pb-3">
-        <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">{new Intl.DateTimeFormat("en", { weekday: "short" }).format(date)}</p>
-        <p className="mt-1 text-lg font-semibold text-zinc-200">{new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(date)}</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">{new Intl.DateTimeFormat("fa-IR-u-ca-persian", { weekday: "short" }).format(date)}</p>
+        <p className="mt-1 text-lg font-semibold text-zinc-200">{new Intl.DateTimeFormat("fa-IR-u-ca-persian", { month: "short", day: "numeric" }).format(date)}</p>
       </header>
       <button
         type="button"
         onClick={() => onAdd(dateKey)}
-        className="mb-3 flex w-full items-center gap-2 rounded-xl border border-dashed border-zinc-600 px-3 py-2 text-left text-xs text-zinc-400 transition-colors hover:border-zinc-500 hover:bg-zinc-800 hover:text-zinc-200"
+        className="mb-3 flex w-full items-center gap-2 rounded-xl border border-dashed border-zinc-600 px-3 py-2 text-right text-xs text-zinc-400 transition-colors hover:border-zinc-500 hover:bg-zinc-800 hover:text-zinc-200"
       >
         <span className="grid size-5 place-items-center rounded-md bg-white text-zinc-950">
           <Plus aria-hidden="true" className="size-4" />
         </span>
-        Add a task
+        افزودن کار
       </button>
       <SortableContext items={visibleTasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
         <ul className="space-y-2">
           {activeTasks.map((task) => <TaskCard key={task.id} task={task} onToggle={onToggle} onOpen={onOpen} keepInPlace showDueDate={false} />)}
           {activeTasks.length === 0 && !previewTask && (
-            <li><p className="py-8 text-center text-xs text-zinc-600">Drop tasks here</p></li>
+            <li><p className="py-8 text-center text-xs text-zinc-600">کارها را اینجا رها کنید</p></li>
           )}
           {previewTask && !previewTask.completed && <li><TaskCardPreview task={previewTask} faded showDueDate={false} /></li>}
           {completedTasks.length > 0 && (
             <li className="py-1 text-center">
               <button type="button" onClick={() => setShowCompleted((current) => !current)} className="text-xs font-medium text-zinc-400 transition-colors hover:text-zinc-100">
-                {showCompleted ? "Hide completed" : `Show completed (${completedTasks.length})`}
+                {showCompleted ? "پنهان کردن انجام‌شده‌ها" : `نمایش انجام‌شده‌ها (${new Intl.NumberFormat("fa-IR").format(completedTasks.length)})`}
               </button>
             </li>
           )}
@@ -146,16 +146,16 @@ export default function CalendarPage() {
   return (
     <div className="mx-auto max-w-7xl">
       <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <div><p className="mb-1 text-sm text-zinc-500">Four-day schedule</p><h1 className="text-3xl font-bold tracking-tight">Calendar</h1></div>
+        <div><p className="mb-1 text-sm text-zinc-500">برنامه چهارروزه</p><h1 className="text-3xl font-bold tracking-tight">تقویم</h1></div>
         <div className="flex items-center gap-2">
-          <button type="button" onClick={() => setDayOffset(0)} className="rounded-lg border border-zinc-700 px-3 py-2 text-sm font-medium text-zinc-300 hover:bg-zinc-800">Today</button>
-          <button type="button" onClick={() => setDayOffset((offset) => offset - 4)} aria-label="Previous four days" className="grid size-9 place-items-center rounded-lg border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"><ChevronLeft aria-hidden="true" className="size-4" /></button>
-          <button type="button" onClick={() => setDayOffset((offset) => offset + 4)} aria-label="Next four days" className="grid size-9 place-items-center rounded-lg border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"><ChevronRight aria-hidden="true" className="size-4" /></button>
+          <button type="button" onClick={() => setDayOffset(0)} className="rounded-lg border border-zinc-700 px-3 py-2 text-sm font-medium text-zinc-300 hover:bg-zinc-800">امروز</button>
+          <button type="button" onClick={() => setDayOffset((offset) => offset - 4)} aria-label="چهار روز قبل" className="grid size-9 place-items-center rounded-lg border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"><ChevronRight aria-hidden="true" className="size-4" /></button>
+          <button type="button" onClick={() => setDayOffset((offset) => offset + 4)} aria-label="چهار روز بعد" className="grid size-9 place-items-center rounded-lg border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"><ChevronLeft aria-hidden="true" className="size-4" /></button>
         </div>
       </header>
 
       {error && <p role="alert" className="mb-4 rounded-lg bg-red-950 px-4 py-3 text-sm text-red-300">{error}</p>}
-      {isLoading ? <p className="py-8 text-center text-sm text-zinc-500">Loading tasks…</p> : (
+      {isLoading ? <p className="py-8 text-center text-sm text-zinc-500">در حال بارگذاری کارها…</p> : (
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}

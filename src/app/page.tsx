@@ -46,35 +46,35 @@ export default function Home() {
     <div className="mx-auto max-w-3xl">
       <header className="mb-10">
         <p className="mb-1 text-sm text-zinc-500">
-          {new Intl.DateTimeFormat("en", { weekday: "long", month: "long", day: "numeric" }).format(new Date())}
+          {new Intl.DateTimeFormat("fa-IR-u-ca-persian", { weekday: "long", month: "long", day: "numeric" }).format(new Date())}
         </p>
-        <h1 className="text-3xl font-bold tracking-tight">Inbox</h1>
+        <h1 className="text-3xl font-bold tracking-tight">صندوق ورودی</h1>
       </header>
 
-      <button type="button" onClick={() => { clearError(); setIsAdding(true); }} className="mb-6 flex w-full items-center gap-3 rounded-xl border border-dashed border-zinc-600 px-4 py-3 text-left text-sm text-zinc-400 transition-colors hover:border-zinc-500 hover:bg-zinc-800 hover:text-zinc-200">
+      <button type="button" onClick={() => { clearError(); setIsAdding(true); }} className="mb-6 flex w-full items-center gap-3 rounded-xl border border-dashed border-zinc-600 px-4 py-3 text-right text-sm text-zinc-400 transition-colors hover:border-zinc-500 hover:bg-zinc-800 hover:text-zinc-200">
         <span className="grid size-6 place-items-center rounded-md bg-white text-zinc-950"><Plus aria-hidden="true" className="size-5" /></span>
-        Add a task
+        افزودن کار
       </button>
 
       {error && <p role="alert" className="mb-4 rounded-lg bg-red-950 px-4 py-3 text-sm text-red-300">{error}</p>}
 
       {isLoading ? (
-        <p className="py-8 text-center text-sm text-zinc-500">Loading tasks…</p>
+        <p className="py-8 text-center text-sm text-zinc-500">در حال بارگذاری کارها…</p>
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <ul className="space-y-2">
             {activeTasks.length === 0 && (
               <li><section className="rounded-2xl border border-zinc-700 bg-zinc-800 p-8 text-center shadow-sm shadow-black/20">
                 <div className="mx-auto mb-4 grid size-12 place-items-center rounded-full bg-zinc-700 text-zinc-300"><Inbox aria-hidden="true" className="size-5" /></div>
-                <h2 className="font-semibold">Your inbox is clear</h2>
-                <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-zinc-500">Capture tasks as they come to you. You can organize them into lists later.</p>
+                <h2 className="font-semibold">صندوق ورودی شما خالی است</h2>
+                <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-zinc-500">کارها را همان لحظه که به ذهنتان می‌رسند ثبت کنید. بعداً می‌توانید آن‌ها را در فهرست‌ها مرتب کنید.</p>
               </section></li>
             )}
             <SortableContext items={activeTasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
               {activeTasks.map((task) => <TaskCard key={task.id} task={task} onToggle={toggleTask} onOpen={(item) => { clearError(); setSelectedTaskId(item.id); }} />)}
             </SortableContext>
             {completedTasks.length > 0 && (
-              <li className="py-1 text-center"><button type="button" onClick={() => setShowCompleted((current) => !current)} className="text-sm font-medium text-zinc-400 hover:text-zinc-100">{showCompleted ? "Hide completed" : `Show completed (${completedTasks.length})`}</button></li>
+              <li className="py-1 text-center"><button type="button" onClick={() => setShowCompleted((current) => !current)} className="text-sm font-medium text-zinc-400 hover:text-zinc-100">{showCompleted ? "پنهان کردن انجام‌شده‌ها" : `نمایش انجام‌شده‌ها (${new Intl.NumberFormat("fa-IR").format(completedTasks.length)})`}</button></li>
             )}
             {showCompleted && (
               <SortableContext items={completedTasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>

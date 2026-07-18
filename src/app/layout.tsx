@@ -1,16 +1,10 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
 import Sidebar from "@/components/sidebar";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: "Todo",
-  description: "A simple space to organize your tasks.",
+  title: "کارها",
+  description: "فضایی ساده برای مدیریت کارهای شما.",
 };
 
 export default function RootLayout({
@@ -19,10 +13,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} h-full antialiased`}
-    >
+    <html lang="fa" dir="rtl" className="h-full antialiased">
       <body className="min-h-full">
         <div className="flex min-h-screen bg-zinc-900 text-zinc-100">
           <Sidebar />

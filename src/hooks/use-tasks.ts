@@ -17,7 +17,7 @@ export function useTasks() {
         if (!response.ok) throw new Error();
         setTasks((await response.json()) as Task[]);
       } catch {
-        setError("Could not load tasks. Please refresh and try again.");
+        setError("بارگذاری کارها ممکن نشد. صفحه را تازه‌سازی کنید و دوباره تلاش کنید.");
       } finally {
         setIsLoading(false);
       }
@@ -40,7 +40,7 @@ export function useTasks() {
       setTasks((current) => [...current, task]);
       return true;
     } catch {
-      setError("Could not add the task. Please try again.");
+      setError("افزودن کار ممکن نشد. دوباره تلاش کنید.");
       return false;
     } finally {
       setIsSaving(false);
@@ -62,7 +62,7 @@ export function useTasks() {
       setTasks((current) => current.map((task) => task.id === id ? updatedTask : task));
       return true;
     } catch {
-      setError("Could not update the task. Please try again.");
+      setError("به‌روزرسانی کار ممکن نشد. دوباره تلاش کنید.");
       return false;
     } finally {
       setIsSaving(false);
@@ -84,7 +84,7 @@ export function useTasks() {
       if (!response.ok) throw new Error();
     } catch {
       setTasks((current) => current.map((item) => item.id === id ? task : item));
-      setError("Could not update the task. Please try again.");
+      setError("به‌روزرسانی کار ممکن نشد. دوباره تلاش کنید.");
     }
   }
 
@@ -101,7 +101,7 @@ export function useTasks() {
       if (!response.ok) throw new Error();
     } catch {
       setTasks(previous);
-      setError("Could not move the task. Please try again.");
+      setError("جابه‌جایی کار ممکن نشد. دوباره تلاش کنید.");
     }
   }
 
@@ -129,7 +129,7 @@ export function useTasks() {
       if (!response.ok) throw new Error();
     } catch {
       setTasks(tasks);
-      setError("Could not reorder the tasks. Please try again.");
+      setError("مرتب‌سازی کارها ممکن نشد. دوباره تلاش کنید.");
     }
   }
 
