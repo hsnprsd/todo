@@ -42,6 +42,7 @@ export default function Home() {
   const [taskTitle, setTaskTitle] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [showCompleted, setShowCompleted] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -117,6 +118,9 @@ export default function Home() {
     }
   }
 
+  const activeTasks = tasks.filter((task) => !task.completed);
+  const completedTasks = tasks.filter((task) => task.completed);
+
   return (
     <div className="flex min-h-screen bg-zinc-900 text-zinc-100">
       <aside className="flex w-20 shrink-0 flex-col border-r border-zinc-700 bg-zinc-800 px-3 py-5 md:w-64 md:px-4">
@@ -136,9 +140,9 @@ export default function Home() {
             >
               <Icon name={item.icon} />
               <span className="hidden flex-1 md:block">{item.label}</span>
-              {(item.label === "Inbox" ? tasks.length : (item.count ?? 0)) > 0 && (
+              {(item.label === "Inbox" ? activeTasks.length : (item.count ?? 0)) > 0 && (
                 <span className="hidden text-xs text-zinc-500 md:block">
-                  {item.label === "Inbox" ? tasks.length : item.count}
+                  {item.label === "Inbox" ? activeTasks.length : item.count}
                 </span>
               )}
             </a>
@@ -229,19 +233,23 @@ export default function Home() {
 
           {isLoading ? (
             <p className="py-8 text-center text-sm text-zinc-500">Loading tasks…</p>
-          ) : tasks.length === 0 ? (
-            <section className="rounded-2xl border border-zinc-700 bg-zinc-800 p-8 text-center shadow-sm shadow-black/20">
-              <div className="mx-auto mb-4 grid size-12 place-items-center rounded-full bg-zinc-700 text-zinc-300">
-                <Icon name="tray" />
-              </div>
-              <h2 className="font-semibold">Your inbox is clear</h2>
-              <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-zinc-500">
-                Capture tasks as they come to you. You can organize them into lists later.
-              </p>
-            </section>
           ) : (
             <ul className="space-y-3">
-              {tasks.map((task) => (
+              {activeTasks.length === 0 && (
+                <li>
+                  <section className="rounded-2xl border border-zinc-700 bg-zinc-800 p-8 text-center shadow-sm shadow-black/20">
+                    <div className="mx-auto mb-4 grid size-12 place-items-center rounded-full bg-zinc-700 text-zinc-300">
+                      <Icon name="tray" />
+                    </div>
+                    <h2 className="font-semibold">Your inbox is clear</h2>
+                    <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-zinc-500">
+                      Capture tasks as they come to you. You can organize them into lists later.
+                    </p>
+                  </section>
+                </li>
+              )}
+
+              {activeTasks.map((task) => (
                 <li
                   key={task.id}
                   className="flex items-center gap-3 rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-4 shadow-sm shadow-black/20"
@@ -250,12 +258,38 @@ export default function Home() {
                     type="checkbox"
                     checked={task.completed}
                     onChange={() => toggleTask(task.id)}
-                    aria-label={`Mark ${task.title} as ${task.completed ? "incomplete" : "complete"}`}
+                    aria-label={`Mark ${task.title} as complete`}
                     className="size-4 accent-white"
                   />
-                  <span className={`text-sm ${task.completed ? "text-zinc-500 line-through" : "text-zinc-200"}`}>
-                    {task.title}
-                  </span>
+                  <span className="text-sm text-zinc-200">{task.title}</span>
+                </li>
+              ))}
+
+              {completedTasks.length > 0 && (
+                <li className="py-1 text-center">
+                  <button
+                    type="button"
+                    onClick={() => setShowCompleted((current) => !current)}
+                    className="text-sm font-medium text-zinc-400 transition-colors hover:text-zinc-100"
+                  >
+                    {showCompleted ? "Hide completed" : `Show completed (${completedTasks.length})`}
+                  </button>
+                </li>
+              )}
+
+              {showCompleted && completedTasks.map((task) => (
+                <li
+                  key={task.id}
+                  className="flex items-center gap-3 rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-4 shadow-sm shadow-black/20"
+                >
+                  <input
+                    type="checkbox"
+                    checked={task.completed}
+                    onChange={() => toggleTask(task.id)}
+                    aria-label={`Mark ${task.title} as incomplete`}
+                    className="size-4 accent-white"
+                  />
+                  <span className="text-sm text-zinc-500 line-through">{task.title}</span>
                 </li>
               ))}
             </ul>
