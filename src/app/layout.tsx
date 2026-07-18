@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import MotionProvider from "@/components/motion-provider";
 import Sidebar from "@/components/sidebar";
+import "react-multi-date-picker/styles/backgrounds/bg-dark.css";
+import "react-multi-date-picker/styles/colors/green.css";
 import "./globals.css";
 
 const sahel = localFont({

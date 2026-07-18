@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, X } from "lucide-react";
+import PersianDatePicker from "@/components/persian-date-picker";
 import type { Task } from "@/types/task";
 
 export default function TaskDetailsModal({
@@ -155,7 +156,7 @@ export default function TaskDetailsModal({
             </div>
             <div>
               <label htmlFor="edit-task-due-date" className="mb-1.5 block text-sm font-medium text-zinc-300">تاریخ سررسید <span className="font-normal text-zinc-500">(اختیاری)</span></label>
-              <input id="edit-task-due-date" type="date" value={dueDate} onChange={(event) => { const nextDueDate = event.target.value; setDueDate(nextDueDate); saveChanges(title, notes, nextDueDate, completed); }} className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-zinc-500" />
+              <PersianDatePicker id="edit-task-due-date" value={dueDate} onChange={(nextDueDate) => { setDueDate(nextDueDate); saveChanges(title, notes, nextDueDate, completed); }} />
             </div>
             <AnimatePresence>
               {error && (
