@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 const navItems = [
   { label: "Inbox", icon: "tray" },
@@ -41,27 +41,81 @@ export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [taskTitle, setTaskTitle] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState("");
 
-  function addTask(event: FormEvent<HTMLFormElement>) {
+  useEffect(() => {
+    async function loadTasks() {
+      try {
+        const response = await fetch("/api/tasks");
+        if (!response.ok) throw new Error("Could not load tasks.");
+        setTasks((await response.json()) as Task[]);
+      } catch {
+        setError("Could not load tasks. Please refresh and try again.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    void loadTasks();
+  }, []);
+
+  async function addTask(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const title = taskTitle.trim();
 
-    if (!title) return;
+    if (!title || isSaving) return;
 
-    setTasks((currentTasks) => [
-      ...currentTasks,
-      { id: Date.now(), title, completed: false },
-    ]);
-    setTaskTitle("");
-    setIsAdding(false);
+    setIsSaving(true);
+    setError("");
+
+    try {
+      const response = await fetch("/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      });
+      if (!response.ok) throw new Error("Could not add task.");
+
+      const task = (await response.json()) as Task;
+      setTasks((currentTasks) => [...currentTasks, task]);
+      setTaskTitle("");
+      setIsAdding(false);
+    } catch {
+      setError("Could not add the task. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
-  function toggleTask(id: number) {
+  async function toggleTask(id: number) {
+    const task = tasks.find((item) => item.id === id);
+    if (!task) return;
+
+    const completed = !task.completed;
+    setError("");
     setTasks((currentTasks) =>
-      currentTasks.map((task) =>
-        task.id === id ? { ...task, completed: !task.completed } : task,
+      currentTasks.map((item) =>
+        item.id === id ? { ...item, completed } : item,
       ),
     );
+
+    try {
+      const response = await fetch("/api/tasks", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, completed }),
+      });
+      if (!response.ok) throw new Error("Could not update task.");
+    } catch {
+      setTasks((currentTasks) =>
+        currentTasks.map((item) =>
+          item.id === id ? { ...item, completed: task.completed } : item,
+        ),
+      );
+      setError("Could not update the task. Please try again.");
+    }
   }
 
   return (
@@ -153,10 +207,10 @@ export default function Home() {
                 </button>
                 <button
                   type="submit"
-                  disabled={!taskTitle.trim()}
+                  disabled={!taskTitle.trim() || isSaving}
                   className="rounded-lg bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  Add task
+                  {isSaving ? "Adding…" : "Add task"}
                 </button>
               </div>
             </form>
@@ -171,7 +225,15 @@ export default function Home() {
             </button>
           )}
 
-          {tasks.length === 0 ? (
+          {error && (
+            <p role="alert" className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+              {error}
+            </p>
+          )}
+
+          {isLoading ? (
+            <p className="py-8 text-center text-sm text-zinc-500">Loading tasks…</p>
+          ) : tasks.length === 0 ? (
             <section className="rounded-2xl border border-zinc-200 bg-white p-8 text-center shadow-sm shadow-zinc-100">
               <div className="mx-auto mb-4 grid size-12 place-items-center rounded-full bg-zinc-100 text-zinc-500">
                 <Icon name="tray" />
