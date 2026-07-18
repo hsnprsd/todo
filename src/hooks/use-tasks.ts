@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { arrayMove } from "@dnd-kit/sortable";
 import { celebrateTaskCompletion } from "@/lib/confetti";
 import type { Task } from "@/types/task";
@@ -10,6 +10,8 @@ export function useTasks() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
+  const updateQueue = useRef<Promise<void>>(Promise.resolve());
+  const pendingUpdates = useRef(0);
 
   useEffect(() => {
     async function loadTasks() {
@@ -49,11 +51,14 @@ export function useTasks() {
   }
 
   async function updateTask(id: number, title: string, notes: string, dueDate: string, completed: boolean) {
-    if (!title.trim() || isSaving) return false;
+    if (!title.trim()) return false;
     const wasCompleted = tasks.find((task) => task.id === id)?.completed ?? false;
+    pendingUpdates.current += 1;
     setIsSaving(true);
     setError("");
-    try {
+
+    let succeeded = false;
+    const request = updateQueue.current.then(async () => {
       const response = await fetch("/api/tasks", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -63,12 +68,19 @@ export function useTasks() {
       const updatedTask = (await response.json()) as Task;
       setTasks((current) => current.map((task) => task.id === id ? updatedTask : task));
       if (!wasCompleted && updatedTask.completed) celebrateTaskCompletion();
-      return true;
+      succeeded = true;
+    });
+    updateQueue.current = request.catch(() => undefined);
+
+    try {
+      await request;
+      return succeeded;
     } catch {
       setError("به‌روزرسانی کار ممکن نشد. دوباره تلاش کنید.");
       return false;
     } finally {
-      setIsSaving(false);
+      pendingUpdates.current -= 1;
+      if (pendingUpdates.current === 0) setIsSaving(false);
     }
   }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, X } from "lucide-react";
 import type { Task } from "@/types/task";
 
@@ -26,6 +26,23 @@ export default function TaskDetailsModal({
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
+  const lastQueuedSave = useRef(JSON.stringify([task.title, task.notes ?? "", task.dueDate ?? "", task.completed]));
+
+  const saveChanges = useCallback((nextTitle: string, nextNotes: string, nextDueDate: string, nextCompleted: boolean) => {
+    const normalizedTitle = nextTitle.trim();
+    if (!normalizedTitle) return;
+    const signature = JSON.stringify([normalizedTitle, nextNotes, nextDueDate, nextCompleted]);
+    if (signature === lastQueuedSave.current) return;
+    lastQueuedSave.current = signature;
+    void onSave(normalizedTitle, nextNotes, nextDueDate, nextCompleted).then((succeeded) => {
+      if (!succeeded && lastQueuedSave.current === signature) lastQueuedSave.current = "";
+    });
+  }, [onSave]);
+
+  const close = useCallback(() => {
+    saveChanges(title || task.title, notes, dueDate, completed);
+    onClose();
+  }, [completed, dueDate, notes, onClose, saveChanges, task.title, title]);
 
   useEffect(() => {
     if (isEditingTitle) {
@@ -35,22 +52,24 @@ export default function TaskDetailsModal({
   }, [isEditingTitle]);
 
   useEffect(() => {
+    const timeout = window.setTimeout(() => saveChanges(title, notes, dueDate, completed), 500);
+    return () => window.clearTimeout(timeout);
+  }, [completed, dueDate, notes, saveChanges, title]);
+
+  useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape" && !isSaving) onClose();
+      if (event.key === "Escape") close();
     }
 
     window.addEventListener("keydown", handleKeyDown, true);
     return () => window.removeEventListener("keydown", handleKeyDown, true);
-  }, [isSaving, onClose]);
+  }, [close]);
 
   function finishEditingTitle() {
-    if (!title.trim()) setTitle(task.title);
+    const nextTitle = title.trim() || task.title;
+    setTitle(nextTitle);
     setIsEditingTitle(false);
-  }
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (await onSave(title.trim(), notes, dueDate, completed)) onClose();
+    saveChanges(nextTitle, notes, dueDate, completed);
   }
 
   async function handleDelete() {
@@ -61,19 +80,19 @@ export default function TaskDetailsModal({
     if (await onDelete()) onClose();
   }
 
-  function close() {
-    if (!isSaving) onClose();
-  }
-
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4 backdrop-blur-sm" onMouseDown={(event) => event.target === event.currentTarget && close()}>
       <div role="dialog" aria-modal="true" aria-labelledby="task-details-title" className="w-full max-w-lg rounded-2xl border border-zinc-700 bg-zinc-900 shadow-2xl shadow-black/40">
-        <form onSubmit={handleSubmit}>
+        <div>
           <header className="flex items-center justify-between gap-4 border-b border-zinc-800 px-5 py-4">
             <h2 id="task-details-title" className="flex min-w-0 flex-1 items-center gap-2 text-lg font-semibold">
               <button
                 type="button"
-                onClick={() => setCompleted((current) => !current)}
+                onClick={() => {
+                  const nextCompleted = !completed;
+                  setCompleted(nextCompleted);
+                  saveChanges(title, notes, dueDate, nextCompleted);
+                }}
                 aria-label={completed ? "فعال کردن کار" : "انجام‌شده علامت زدن کار"}
                 title={completed ? "فعال کردن" : "انجام‌شده علامت زدن"}
                 className={`grid size-6 shrink-0 place-items-center rounded-md transition-colors hover:bg-green-500/20 hover:text-green-400 ${completed ? "bg-zinc-700 text-zinc-100" : "text-zinc-400"}`}
@@ -107,7 +126,7 @@ export default function TaskDetailsModal({
                 </button>
               )}
             </h2>
-            <button type="button" onClick={close} disabled={isSaving} aria-label="بستن" className="grid size-8 shrink-0 place-items-center rounded-lg text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 disabled:opacity-40">
+            <button type="button" onClick={close} aria-label="بستن" className="grid size-8 shrink-0 place-items-center rounded-lg text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100">
               <X aria-hidden="true" className="size-4" />
             </button>
           </header>
@@ -115,25 +134,21 @@ export default function TaskDetailsModal({
           <div className="space-y-4 px-5 py-5">
             <div>
               <label htmlFor="edit-task-notes" className="mb-1.5 block text-sm font-medium text-zinc-300">یادداشت <span className="font-normal text-zinc-500">(اختیاری)</span></label>
-              <textarea id="edit-task-notes" rows={3} value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="جزئیات را وارد کنید" className="w-full resize-none rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 outline-none placeholder:text-zinc-500 focus:border-zinc-500" />
+              <textarea id="edit-task-notes" rows={3} value={notes} onChange={(event) => setNotes(event.target.value)} onBlur={() => saveChanges(title, notes, dueDate, completed)} placeholder="جزئیات را وارد کنید" className="w-full resize-none rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 outline-none placeholder:text-zinc-500 focus:border-zinc-500" />
             </div>
             <div>
               <label htmlFor="edit-task-due-date" className="mb-1.5 block text-sm font-medium text-zinc-300">تاریخ سررسید <span className="font-normal text-zinc-500">(اختیاری)</span></label>
-              <input id="edit-task-due-date" type="date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-zinc-500" />
+              <input id="edit-task-due-date" type="date" value={dueDate} onChange={(event) => { const nextDueDate = event.target.value; setDueDate(nextDueDate); saveChanges(title, notes, nextDueDate, completed); }} className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-zinc-500" />
             </div>
             {error && <p role="alert" className="rounded-lg bg-red-950 px-3 py-2 text-sm text-red-300">{error}</p>}
           </div>
 
-          <footer className="flex items-center justify-between gap-3 border-t border-zinc-800 px-5 py-4">
+          <footer className="flex items-center border-t border-zinc-800 px-5 py-4">
             <button type="button" onClick={handleDelete} disabled={isSaving} className="rounded-lg px-3 py-2 text-sm font-medium text-red-400 hover:bg-red-950 hover:text-red-300 disabled:opacity-40">
               {isConfirmingDelete ? "برای تأیید دوباره کلیک کنید" : "حذف کار"}
             </button>
-            <div className="flex gap-2">
-              <button type="button" onClick={close} disabled={isSaving} className="rounded-lg px-3 py-2 text-sm font-medium text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 disabled:opacity-40">انصراف</button>
-              <button type="submit" disabled={!title.trim() || isSaving} className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-40">{isSaving ? "در حال ذخیره…" : "ذخیره تغییرات"}</button>
-            </div>
           </footer>
-        </form>
+        </div>
       </div>
     </div>
   );
