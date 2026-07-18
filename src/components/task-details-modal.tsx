@@ -10,18 +10,21 @@ export default function TaskDetailsModal({
   isSaving,
   onClose,
   onSave,
+  onDelete,
 }: {
   task: Task;
   error: string;
   isSaving: boolean;
   onClose: () => void;
   onSave: (title: string, notes: string, dueDate: string, completed: boolean) => Promise<boolean>;
+  onDelete: () => Promise<boolean>;
 }) {
   const [title, setTitle] = useState(task.title);
   const [notes, setNotes] = useState(task.notes ?? "");
   const [dueDate, setDueDate] = useState(task.dueDate ?? "");
   const [completed, setCompleted] = useState(task.completed);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -48,6 +51,14 @@ export default function TaskDetailsModal({
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (await onSave(title.trim(), notes, dueDate, completed)) onClose();
+  }
+
+  async function handleDelete() {
+    if (!isConfirmingDelete) {
+      setIsConfirmingDelete(true);
+      return;
+    }
+    if (await onDelete()) onClose();
   }
 
   function close() {
@@ -113,9 +124,14 @@ export default function TaskDetailsModal({
             {error && <p role="alert" className="rounded-lg bg-red-950 px-3 py-2 text-sm text-red-300">{error}</p>}
           </div>
 
-          <footer className="flex justify-end gap-2 border-t border-zinc-800 px-5 py-4">
-            <button type="button" onClick={close} disabled={isSaving} className="rounded-lg px-3 py-2 text-sm font-medium text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 disabled:opacity-40">انصراف</button>
-            <button type="submit" disabled={!title.trim() || isSaving} className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-40">{isSaving ? "در حال ذخیره…" : "ذخیره تغییرات"}</button>
+          <footer className="flex items-center justify-between gap-3 border-t border-zinc-800 px-5 py-4">
+            <button type="button" onClick={handleDelete} disabled={isSaving} className="rounded-lg px-3 py-2 text-sm font-medium text-red-400 hover:bg-red-950 hover:text-red-300 disabled:opacity-40">
+              {isConfirmingDelete ? "برای تأیید دوباره کلیک کنید" : "حذف کار"}
+            </button>
+            <div className="flex gap-2">
+              <button type="button" onClick={close} disabled={isSaving} className="rounded-lg px-3 py-2 text-sm font-medium text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 disabled:opacity-40">انصراف</button>
+              <button type="submit" disabled={!title.trim() || isSaving} className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-40">{isSaving ? "در حال ذخیره…" : "ذخیره تغییرات"}</button>
+            </div>
           </footer>
         </form>
       </div>

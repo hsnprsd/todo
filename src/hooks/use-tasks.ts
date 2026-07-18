@@ -72,6 +72,27 @@ export function useTasks() {
     }
   }
 
+  async function deleteTask(id: number) {
+    if (isSaving) return false;
+    setIsSaving(true);
+    setError("");
+    try {
+      const response = await fetch("/api/tasks", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (!response.ok) throw new Error();
+      setTasks((current) => current.filter((task) => task.id !== id));
+      return true;
+    } catch {
+      setError("حذف کار ممکن نشد. دوباره تلاش کنید.");
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
   async function toggleTask(id: number) {
     const task = tasks.find((item) => item.id === id);
     if (!task) return;
@@ -145,6 +166,7 @@ export function useTasks() {
     clearError: () => setError(""),
     addTask,
     updateTask,
+    deleteTask,
     toggleTask,
     moveTaskToDate,
     reorderTasks,

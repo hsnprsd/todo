@@ -57,6 +57,21 @@ export async function POST(request: Request) {
   return NextResponse.json(serializeTask(task), { status: 201 });
 }
 
+export async function DELETE(request: Request) {
+  const body = (await request.json()) as { id?: unknown };
+
+  if (typeof body.id !== "number" || !Number.isInteger(body.id)) {
+    return NextResponse.json({ error: "شناسه کار معتبر نیست." }, { status: 400 });
+  }
+
+  const result = db.prepare("DELETE FROM tasks WHERE id = ?").run(body.id);
+  if (result.changes === 0) {
+    return NextResponse.json({ error: "کار پیدا نشد." }, { status: 404 });
+  }
+
+  return NextResponse.json({ success: true });
+}
+
 export async function PATCH(request: Request) {
   const body = (await request.json()) as {
     id?: unknown;

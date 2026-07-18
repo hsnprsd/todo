@@ -10,7 +10,7 @@ import TaskDetailsModal from "@/components/task-details-modal";
 import { useTasks } from "@/hooks/use-tasks";
 
 export default function Home() {
-  const { tasks, isLoading, isSaving, error, clearError, addTask, updateTask, toggleTask, reorderTasks } = useTasks();
+  const { tasks, isLoading, isSaving, error, clearError, addTask, updateTask, deleteTask, toggleTask, reorderTasks } = useTasks();
   const [showCompleted, setShowCompleted] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [title, setTitle] = useState("");
@@ -86,7 +86,7 @@ export default function Home() {
       )}
 
       {isAdding && <AddTaskModal title={title} notes={notes} dueDate={dueDate} error={error} isSaving={isSaving} onTitleChange={setTitle} onNotesChange={setNotes} onDueDateChange={setDueDate} onClose={closeAddModal} onSubmit={submitTask} />}
-      {selectedTask && <TaskDetailsModal task={selectedTask} error={error} isSaving={isSaving} onClose={() => setSelectedTaskId(null)} onSave={(nextTitle, nextNotes, nextDueDate, completed) => updateTask(selectedTask.id, nextTitle, nextNotes, nextDueDate, completed)} />}
+      {selectedTask && <TaskDetailsModal task={selectedTask} error={error} isSaving={isSaving} onClose={() => setSelectedTaskId(null)} onSave={(nextTitle, nextNotes, nextDueDate, completed) => updateTask(selectedTask.id, nextTitle, nextNotes, nextDueDate, completed)} onDelete={() => deleteTask(selectedTask.id)} />}
     </div>
   );
 }

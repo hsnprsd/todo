@@ -84,7 +84,7 @@ function DayColumn({ date, tasks, previewTask, onAdd, onToggle, onOpen }: { date
 }
 
 export default function CalendarPage() {
-  const { tasks, isLoading, isSaving, error, clearError, addTask, updateTask, toggleTask, moveTaskToDate, reorderTasks } = useTasks();
+  const { tasks, isLoading, isSaving, error, clearError, addTask, updateTask, deleteTask, toggleTask, moveTaskToDate, reorderTasks } = useTasks();
   const [dayOffset, setDayOffset] = useState(0);
   const [isAdding, setIsAdding] = useState(false);
   const [taskTitle, setTaskTitle] = useState("");
@@ -210,7 +210,7 @@ export default function CalendarPage() {
           onSubmit={submitTask}
         />
       )}
-      {selectedTask && <TaskDetailsModal task={selectedTask} error={error} isSaving={isSaving} onClose={() => setSelectedTaskId(null)} onSave={(nextTitle, nextNotes, nextDueDate, completed) => updateTask(selectedTask.id, nextTitle, nextNotes, nextDueDate, completed)} />}
+      {selectedTask && <TaskDetailsModal task={selectedTask} error={error} isSaving={isSaving} onClose={() => setSelectedTaskId(null)} onSave={(nextTitle, nextNotes, nextDueDate, completed) => updateTask(selectedTask.id, nextTitle, nextNotes, nextDueDate, completed)} onDelete={() => deleteTask(selectedTask.id)} />}
     </div>
   );
 }
