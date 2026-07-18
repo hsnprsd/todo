@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { arrayMove } from "@dnd-kit/sortable";
+import { celebrateTaskCompletion } from "@/lib/confetti";
 import type { Task } from "@/types/task";
 
 export function useTasks() {
@@ -49,6 +50,7 @@ export function useTasks() {
 
   async function updateTask(id: number, title: string, notes: string, dueDate: string, completed: boolean) {
     if (!title.trim() || isSaving) return false;
+    const wasCompleted = tasks.find((task) => task.id === id)?.completed ?? false;
     setIsSaving(true);
     setError("");
     try {
@@ -60,6 +62,7 @@ export function useTasks() {
       if (!response.ok) throw new Error();
       const updatedTask = (await response.json()) as Task;
       setTasks((current) => current.map((task) => task.id === id ? updatedTask : task));
+      if (!wasCompleted && updatedTask.completed) celebrateTaskCompletion();
       return true;
     } catch {
       setError("به‌روزرسانی کار ممکن نشد. دوباره تلاش کنید.");
@@ -82,6 +85,7 @@ export function useTasks() {
         body: JSON.stringify({ id, completed }),
       });
       if (!response.ok) throw new Error();
+      if (completed) celebrateTaskCompletion();
     } catch {
       setTasks((current) => current.map((item) => item.id === id ? task : item));
       setError("به‌روزرسانی کار ممکن نشد. دوباره تلاش کنید.");
